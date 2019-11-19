@@ -19,7 +19,7 @@ using CosmosDbTable = Microsoft.Azure.CosmosDB.Table;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents;
 using System.Drawing.Drawing2D;
-using Microsoft.CognitiveServices.ContentModerator;
+using Microsoft.Azure.CognitiveServices.ContentModerator;
 using Microsoft.Azure.CognitiveServices.Search.EntitySearch;
 using System.Net;
 
