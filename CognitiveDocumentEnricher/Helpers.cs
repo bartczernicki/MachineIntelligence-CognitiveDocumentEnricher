@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CognitiveDocumentEnricher
 {
@@ -16,7 +14,6 @@ namespace CognitiveDocumentEnricher
             return Enumerable.Range(0, (str.Length / chunkSize) + 1)
                 .Select(i => SafeSubstring(str, i * chunkSize, chunkSize + 40));
         }
-
 
         public static string CustomSubString(string stringToSplit, int chunkSize, int i)
         {

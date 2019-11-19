@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Polly;
+using Polly.Wrap;
+using System;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Polly;
-using Polly.Wrap;
-using System.Web.Http;
 
 namespace CognitiveDocumentEnricher
 {
