@@ -23,6 +23,7 @@ Inside the Azure portal provision the following services:
 3) Storage Account (General Purpose v2)
 4) Azure Cosmos DB Account (Core (SQL) API)
 
+Screenshot of Azure Portal of required resources
 ![Azure Portal Resources](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/AzurePortal-ResourcesforEnrichment.png)
 
 Set up:
@@ -32,4 +33,5 @@ Set up:
 4) Create a new folder and add some example PDF, Word documents to the folder
 5) Add the appropriate Cognitive Services keys to the App.Config (example shown below)
 
+Screenshot of App.Config file
 ![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/SampleAppConfig.png)
