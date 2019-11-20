@@ -1,43 +1,44 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace CognitiveDocumentEnricher
 {
     public class Word
     {
-        public string boundingBox { get; set; }
+        public List<int> boundingBox { get; set; }
         public string text { get; set; }
+        public string confidence { get; set; }
     }
 
     public class Line
     {
-        public string boundingBox { get; set; }
+        public List<int> boundingBox { get; set; }
+        public string text { get; set; }
         public List<Word> words { get; set; }
     }
 
-    public class Region
+    public class RecognitionResult
     {
-        public string boundingBox { get; set; }
+        public int page { get; set; }
+        public double clockwiseOrientation { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
+        public string unit { get; set; }
         public List<Line> lines { get; set; }
     }
 
     public class OCRObjectResult
     {
-        public string language { get; set; }
-        public string orientation { get; set; }
-        public double textAngle { get; set; }
-        public List<Region> regions { get; set; }
+        public string status { get; set; }
+        public List<RecognitionResult> recognitionResults { get; set; }
 
         public override string ToString()
         {
             StringBuilder stringBuilder = new StringBuilder();
 
-            if (this.regions != null)
+            if (this.recognitionResults != null)
             {
-                foreach (var region in this.regions)
+                foreach (var region in this.recognitionResults)
                 {
                     foreach (var line in region.lines)
                     {

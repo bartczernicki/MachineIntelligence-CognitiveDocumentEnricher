@@ -305,57 +305,103 @@ namespace CognitiveDocumentEnricher
             return new Tuple<KeyPhraseBatchResult, EntitiesBatchResult>(keyPhraseBatchResult, entitiesBatchResult);
         }
 
-        public static async Task<Tuple<string, OCRObjectResult>> OCRResult(MemoryStream memoryStream, string apiVersion)
-        {
-            // Two Computer Vision API versions for OCR. v1.0 and v2.0 (in preview)
+        //public static async Task<Tuple<string, OCRObjectResult>> OCRResult(MemoryStream memoryStream, string apiVersion)
+        //{
+        //    // Two Computer Vision API versions for OCR. v1.0 and v2.0 (in preview)
 
+        //    // Computer Vision URL
+        //    var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/ocr?language=en&detectOrientation=true";
+        //    // return variables
+        //    var responseContent = string.Empty;
+        //    OCRObjectResult ocrObject = null;
+
+        //    HttpContent content = new StreamContent(memoryStream);
+        //    content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/octet-stream");
+
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        // Setup HttpClient
+        //        httpClient.BaseAddress = new Uri(urlString);
+
+        //        // Request headers
+        //        httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+        //        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+
+        //        // Make request
+        //        var response = await httpClient.PostAsync(urlString, content);
+
+        //        //read response and write to view
+        //        if (response.IsSuccessStatusCode)
+        //        {
+        //            responseContent = await response.Content.ReadAsStringAsync();
+        //        }
+        //        else
+        //        {
+        //            throw new Exception(response.StatusCode + " : " + response.ReasonPhrase);
+        //        }
+
+        //        ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(responseContent);
+        //    }
+
+        //    return new Tuple<string, OCRObjectResult>(responseContent, ocrObject);
+        //}
+
+        //public static async Task<Tuple<string, OCRObjectResult>> OCRResult(string uri, string apiVersion)
+        //{
+        //    // Several Computer Vision API versions for OCR. v1.0 and v2.0
+        //    // v2.0 is based on newer AI technology, different REST methods have different advantages
+
+        //    // Computer Vision URL
+        //    var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/ocr?language=en&detectOrientation=true";
+        //    // return variables
+        //    var responseContent = string.Empty;
+        //    OCRObjectResult ocrObject = null;
+
+        //    using (var httpClient = new HttpClient())
+        //    {
+        //        // Setup HttpClient
+        //        httpClient.BaseAddress = new Uri(urlString);
+
+        //        // Request headers
+        //        httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+        //        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        //        // Request body
+        //        var uriBody = "{\"url\":\"" + uri + "\"}";
+
+        //        using (var content = new StringContent(uriBody))
+        //        {
+        //            content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+
+        //            // Make request with resiliency policy (can retry http requests)
+        //            var resilienyStrategy = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategy();
+        //            var response = await resilienyStrategy.ExecuteAsync(() => httpClient.PostAsync(urlString, content));
+
+        //            //read response and write to view
+        //            if (response.IsSuccessStatusCode)
+        //            {
+        //                responseContent = await response.Content.ReadAsStringAsync();
+        //            }
+        //            else
+        //            {
+        //                throw new Exception(response.StatusCode + " : " + response.ReasonPhrase);
+        //            }
+        //        }
+
+        //        ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(responseContent);
+        //    }
+
+        //    return new Tuple<string, OCRObjectResult>(responseContent, ocrObject);
+        //}
+
+        public static async Task<Tuple<string, OCRObjectResult>> OCRResultBatchRead(string uri, string apiVersion)
+        {
             // Computer Vision URL
-            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/ocr?language=en&detectOrientation=true";
+            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
             // return variables
             var responseContent = string.Empty;
             OCRObjectResult ocrObject = null;
-
-            HttpContent content = new StreamContent(memoryStream);
-            content.Headers.ContentType = new MediaTypeWithQualityHeaderValue("application/octet-stream");
-
-            using (var httpClient = new HttpClient())
-            {
-                // Setup HttpClient
-                httpClient.BaseAddress = new Uri(urlString);
-
-                // Request headers
-                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
-
-                // Make request
-                var response = await httpClient.PostAsync(urlString, content);
-
-                //read response and write to view
-                if (response.IsSuccessStatusCode)
-                {
-                    responseContent = await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    throw new Exception(response.StatusCode + " : " + response.ReasonPhrase);
-                }
-
-                ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(responseContent);
-            }
-
-            return new Tuple<string, OCRObjectResult>(responseContent, ocrObject);
-        }
-
-        public static async Task<Tuple<string, OCRObjectResult>> OCRResult(string uri, string apiVersion)
-        {
-            // Two Computer Vision API versions for OCR. v1.0 and v2.0 (in preview)
-            // v2.0 is based on newer AI technology
-
-            // Computer Vision URL
-            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/ocr?language=en&detectOrientation=true";
-            // return variables
-            var responseContent = string.Empty;
-            OCRObjectResult ocrObject = null;
+            string ocrResultString = string.Empty;
 
             using (var httpClient = new HttpClient())
             {
@@ -376,24 +422,37 @@ namespace CognitiveDocumentEnricher
                     // Make request with resiliency policy (can retry http requests)
                     var resilienyStrategy = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategy();
                     var response = await resilienyStrategy.ExecuteAsync(() => httpClient.PostAsync(urlString, content));
-                    //var response = await httpClient.PostAsync(urlString, content);
 
-                    //read response and write to view
+                    // read response and write to view
+                    // batch call, you need to wait for the "job" to finish
                     if (response.IsSuccessStatusCode)
                     {
-                        responseContent = await response.Content.ReadAsStringAsync();
+                        var urlLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+                        var resilienyStrategyBatchJob = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategyForBatchJob();
+
+                        var ocrResultResponse = await resilienyStrategyBatchJob.ExecuteAsync(() => httpClient.GetAsync(urlLocation));
+
+                        if (ocrResultResponse.IsSuccessStatusCode)
+                        {
+                            ocrResultString = await ocrResultResponse.Content.ReadAsStringAsync();
+                            if (string.IsNullOrEmpty(ocrResultString))
+                            {
+                                var test = ocrResultString;
+                            }
+                        }
+
+                        ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(ocrResultString);
                     }
                     else
                     {
                         throw new Exception(response.StatusCode + " : " + response.ReasonPhrase);
                     }
                 }
-
-                ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(responseContent);
             }
 
-            return new Tuple<string, OCRObjectResult>(responseContent, ocrObject);
+            return new Tuple<string, OCRObjectResult>(ocrResultString, ocrObject);
         }
+
 
         public static async Task<SentimentV3Response> SentimentV3PreviewPredictAsync(List<TextAnalyticsInput> documents)
         {
@@ -450,7 +509,9 @@ namespace CognitiveDocumentEnricher
             ocrResult = ocrResult.Trim();
             keyPhraseResult = keyPhraseResult.Trim();
 
-            var entityTaxonomies = string.Join(" ;;;; ", bingEntityDataResult.Select(a => a.Taxony).ToArray());
+            var entityTaxonomies = 
+                (bingEntityDataResult is null) ? string.Empty :
+                string.Join(" ;;;; ", bingEntityDataResult.Select(a => a.Taxony).ToArray());
 
             var size = ocrResult.Length * sizeof(char);
             var keyPhraseResultSize = keyPhraseResult.Length * sizeof(char);
@@ -704,7 +765,6 @@ namespace CognitiveDocumentEnricher
                     // Make request with resiliency policy (can retry http requests)
                     var resilienyStrategy = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategy();
                     var response = await resilienyStrategy.ExecuteAsync(() => httpClient.PostAsync(urlString, content));
-                    //var response = await httpClient.PostAsync(urlString, content);
 
                     //read response and write to view
                     if (response.IsSuccessStatusCode)

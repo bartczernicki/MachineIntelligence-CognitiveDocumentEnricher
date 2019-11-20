@@ -343,7 +343,9 @@ namespace CognitiveDocumentEnricher
                         // Retrieve OCR keyPhraseResult and upload JSON to cloud
                         // Uses API based on cloud storage
                         var imageUrl = trainingImage.Uri.AbsoluteUri + Config.STORAGE_ACCOUNT_TEMP_SAS_KEY;
-                        var ocrResult = Util.OCRResult(imageUrl, "v2.0").Result;
+                        // var ocrResult = Util.OCRResult(imageUrl, "v2.0").Result;
+                        var ocrResult = Util.OCRResultBatchRead(imageUrl, "v2.1").Result;
+                        // Upload the JSON response to the blob containers
                         trainingImageOcr.UploadText(ocrResult.Item1);
 
                         var ocrString = ocrResult.Item2.ToString();
@@ -358,11 +360,13 @@ namespace CognitiveDocumentEnricher
                     {
                         // remove the trial items from Aspose
                         var tempOcrItem = ocrItem.
+                            Replace("Evaluation Only. Created with Aspose.PDF. Copyright 2002-2019 Aspose Pty Ltd.", string.Empty).
                             Replace("Evaluation Only. Created with Aspose.PDF. Copyright 2002-2018 Aspose Pty Ltd.", string.Empty).
                             Replace("Evaluation Only. Created with Aspose.PDF", string.Empty).
                             Replace("Evaluation Only. Created with Aspose.Words", string.Empty).
                             Replace("Evaluation Only. Created with Aspose.Cells", string.Empty).
                             Replace("Created with Aspose.Cells for .NET.Copyright 2003 - 2018", string.Empty).
+                            Replace("Copyright 2002-2019 Aspose Pty Ltd.", string.Empty).
                             Replace("Copyright 2002-2018 Aspose Pty Ltd.", string.Empty).
                             Replace("Aspose Pty Ltd.", string.Empty).
                             Replace("Created with Aspose.", string.Empty).
@@ -379,7 +383,9 @@ namespace CognitiveDocumentEnricher
                             Replace("Evaluatqoh With %002-2018 A", string.Empty).
                             Replace("Created with Aspose.Cells for .NET.Copyright 2003 - 2018 A", string.Empty).
                             Replace("Evaluation Only• created 18 Aspose Pty", string.Empty).
-                            Replace("Evaluation Only. Created with Aspose.PD", string.Empty);
+                            Replace("Evaluation Only. Created with Aspose.PDF", string.Empty).
+                            Replace("with Aspose. PDF", string.Empty).
+                            Replace("Aspose.PDF", string.Empty);
                         // add to main OCR file
                         fileTotalOcr += tempOcrItem + System.Environment.NewLine;
 
