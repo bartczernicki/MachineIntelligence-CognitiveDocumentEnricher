@@ -13,6 +13,18 @@ namespace CognitiveDocumentEnricher
     {
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Checking Configuration Values...");
+            Console.ResetColor();
+
+            Console.WriteLine("--------------------------------");
+            Console.WriteLine("Use Cognitive Services Bing Entity Search: " + Config.USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH);
+            Console.WriteLine("Use Azure Blob Storage: " + Config.USE_AZURE_BLOB_STORAGE);
+            Console.WriteLine("Use Azure Table Storage: " + Config.USE_AZURE_TABLE_STORAGE);
+            Console.WriteLine("Use CosmosDB Storage: " + Config.USE_COSMOSDB_STORAGE);
+            Console.WriteLine("--------------------------------");
+            Console.WriteLine(string.Empty);
+
             Dictionary<string, Exception> errors = new Dictionary<string, Exception>();
             Dictionary<string, int> longDocuments = new Dictionary<string, int>();
             Dictionary<string, Tuple<string, string, string>> processedTrainingFiles = new Dictionary<string, Tuple<string, string, string>>(1700);
@@ -22,9 +34,9 @@ namespace CognitiveDocumentEnricher
             var topThreeClassificationProbabilitiesDictionary = new Dictionary<string, List<double>>();
             var piiResult = new PIIResult();
 
-            // Cosmos DB Objects Init
-
-            Console.WriteLine("Extracting content from documents");
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Extracting content from documents...");
+            Console.ResetColor();
 
             // List of types of extensions
             var fileTypes = new List<Tuple<string, string>>();
@@ -33,23 +45,6 @@ namespace CognitiveDocumentEnricher
 
             // Initialize blob & table client
 
-            // Azure Storage Objects Init
-            var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
-            var tableStorageClient = Util.BlobStorageAccount.CreateCloudTableClient();
-            Microsoft.WindowsAzure.Storage.Table.CloudTable table = tableStorageClient.GetTableReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES);
-            table.CreateIfNotExists();
-            // Cosmos DB Objects Init
-            // Note: Not Used
-            // var cosmosDbTableStorageClient = Util.CosmosDbStorageAccount.CreateCloudTableClient();
-                //var cosmosDbTable = cosmosDbTableStorageClient.GetTableReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES);
-                //cosmosDbTable.CreateIfNotExists();
-            // Cosmos DB - Documents Client
-            DocumentClient documentClient = new DocumentClient(Config.COSMOSDB_DOCUMENTS_URI, Config.COSMOSDB_DOCUMENTS_KEY);
-
-            // ML Scoring Table
-            // Note: Note Used
-            // var cosmosDbTableStorageClientScoringTable = Util.CosmosDbStorageAccountScoringTable.CreateCloudTableClient();
-            // Microsoft.Azure.CosmosDB.Table.CloudTable cosmosDbTableScoringTable = null; // cosmosDbTableStorageClientScoringTable.GetTableReference(Config.STORAGE_TABLENAME_DOCUMENTSCORING);
 
             // Test or Full
             var runTestFiles = false;
@@ -318,7 +313,7 @@ namespace CognitiveDocumentEnricher
                         System.IO.Directory.CreateDirectory(directoryFile.ToLower());
 
                         // Save the image to local image folder (cache)
-                        using (Bitmap image = (Bitmap)System.Drawing.Image.FromStream(imageStream))
+                        using (Bitmap image = (Bitmap) System.Drawing.Image.FromStream(imageStream))
                         {
                             var resizedImage = Util.ResizeImageForCognitiveOCR(image);
                             resizedImage.Save(fullFileImageName, ImageFormat.Png);
@@ -327,26 +322,39 @@ namespace CognitiveDocumentEnricher
                         var basePath = cleanCategory + @"\" + cleanFileName + @"\" + cleanFileName + (i + 1);
 
                         // Set up cloud path for JSON content
-                        var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
-                        uri = enrichmentContainer.StorageUri.PrimaryUri + @"/" + cleanCategory + @"/" + cleanFileName + @"/";
                         var cloudImagePath = (basePath + ".png").ToLower();
                         var cloudOcrPath = (basePath + ".json").ToLower();
-                        var trainingImage = enrichmentContainer.GetBlockBlobReference(cloudImagePath);
-                        var trainingImageOcr = enrichmentContainer.GetBlockBlobReference(cloudOcrPath);
 
-                        // Send image to the cloud
-                        using (var fs = new FileStream(fullFileImageName, FileMode.Open))
+                        var ocrResult = Util.OCRResultBatchReadFromImage(fullFileImageName, "v2.1").Result;
+                        //var ocrResult = Util.OCRResultBatchRead(imageUrl, "v2.1").Result;
+
+                        if (Config.USE_AZURE_BLOB_STORAGE)
                         {
-                            trainingImage.UploadFromStream(fs);
+                            // Azure Storage Objects Init
+                            var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
+                            var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
+                            uri = enrichmentContainer.StorageUri.PrimaryUri + @"/" + cleanCategory + @"/" + cleanFileName + @"/";
+                            var trainingImage = enrichmentContainer.GetBlockBlobReference(cloudImagePath);
+                            var trainingImageOcr = enrichmentContainer.GetBlockBlobReference(cloudOcrPath);
+
+                            // Send PNG image to Blob Storage
+                            using (var fs = new FileStream(fullFileImageName, FileMode.Open))
+                            {
+                                trainingImage.UploadFromStream(fs);
+                            }
+
+                            // Retrieve OCR keyPhraseResult and upload JSON to cloud
+                            // Uses API based on cloud storage
+                            var imageUrl = trainingImage.Uri.AbsoluteUri + Config.STORAGE_ACCOUNT_TEMP_SAS_KEY;
+
+                            // Upload the JSON response to the blob containers
+                            trainingImageOcr.UploadText(ocrResult.Item1);
                         }
 
-                        // Retrieve OCR keyPhraseResult and upload JSON to cloud
-                        // Uses API based on cloud storage
-                        var imageUrl = trainingImage.Uri.AbsoluteUri + Config.STORAGE_ACCOUNT_TEMP_SAS_KEY;
-                        // var ocrResult = Util.OCRResult(imageUrl, "v2.0").Result;
-                        var ocrResult = Util.OCRResultBatchRead(imageUrl, "v2.1").Result;
-                        // Upload the JSON response to the blob containers
-                        trainingImageOcr.UploadText(ocrResult.Item1);
+                        // Write JSON to local disk
+                        var jsonFileName = basePath + ".json";
+                        System.IO.File.WriteAllText(Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS + @"\" + jsonFileName, ocrResult.Item1);
+
 
                         var ocrString = ocrResult.Item2.ToString();
                         imagePagesOcr.Add(ocrString);
@@ -424,9 +432,14 @@ namespace CognitiveDocumentEnricher
                     var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
                     var sentimentV3Prediction = Util.SentimentV3PreviewPredictAsync(textAnalyticsInputs).Result;
 
-                    Console.WriteLine("\tRetrieving Bing Entitites...");
-                    List<BingEntityData> entityTaxonyResult = Util.GetEntitiesSearchResponse(entities);
-                    Console.WriteLine("\tFinished Retrieving Bing Entitites.");
+                    List<BingEntityData> entityTaxonyResult = new List<BingEntityData>();
+
+                    if (Config.USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH)
+                    {
+                        Console.WriteLine("\tRetrieving Bing Entitites...");
+                        entityTaxonyResult = Util.GetEntitiesSearchResponse(entities);
+                        Console.WriteLine("\tFinished Retrieving Bing Entitites.");
+                    }
 
                     // var len1 = distinctKeyPhraseString.Length;
                     // var len2 = keyPhraseString.Length;
@@ -448,21 +461,34 @@ namespace CognitiveDocumentEnricher
                     // Azure Table Storage
                     // Note: most attributes are truncated due to limitations for Azure Table Storage
                     // For large documents use: CosmosDb or blob storage
-                    Util.WriteToBlobStorageTable(table, cleanCategory, cleanFileName, fileTotalOcr,
-                        keyPhraseString, distinctKeyPhraseString,
-                        entitiesString, distinctEntitiesString,
-                        pages, uri, documentType, documentSizeInBytes,
-                        piiResult, entityTaxonyResult, sentimentV3Prediction);
-                    Console.WriteLine("\tPersisted: Azure Table Storage");
+                    if (Config.USE_AZURE_TABLE_STORAGE)
+                    {
+                        var tableStorageClient = Util.BlobStorageAccount.CreateCloudTableClient();
+                        Microsoft.WindowsAzure.Storage.Table.CloudTable table = tableStorageClient.GetTableReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES);
+                        table.CreateIfNotExists();
 
-                    //// CosmosDB SQL API
-                    Util.WriteToCosmosDbStorageSQLApi(documentClient, cleanCategory, cleanFileName, fileTotalOcr,
-                        keyPhraseString, distinctKeyPhraseString,
-                        entitiesString, distinctEntitiesString,
-                        pages, uri, documentType, documentSizeInBytes,
-                        topThreeClassificationNamesDictionary, topThreeClassificationProbabilitiesDictionary,
-                        piiResult, entityTaxonyResult, sentimentV3Prediction);
-                    Console.WriteLine("\tPersisted: CosmosDB - SQL API");
+                        Util.WriteToBlobStorageTable(table, cleanCategory, cleanFileName, fileTotalOcr,
+                            keyPhraseString, distinctKeyPhraseString,
+                            entitiesString, distinctEntitiesString,
+                            pages, uri, documentType, documentSizeInBytes,
+                            piiResult, entityTaxonyResult, sentimentV3Prediction);
+                        Console.WriteLine("\tPersisted: Azure Table Storage");
+                    }
+
+                    if (Config.USE_COSMOSDB_STORAGE)
+                    {
+                        // Cosmos DB - Documents Client
+                        DocumentClient documentClient = new DocumentClient(Config.COSMOSDB_DOCUMENTS_URI, Config.COSMOSDB_DOCUMENTS_KEY);
+
+                        //// CosmosDB SQL API
+                        Util.WriteToCosmosDbStorageSQLApi(documentClient, cleanCategory, cleanFileName, fileTotalOcr,
+                            keyPhraseString, distinctKeyPhraseString,
+                            entitiesString, distinctEntitiesString,
+                            pages, uri, documentType, documentSizeInBytes,
+                            topThreeClassificationNamesDictionary, topThreeClassificationProbabilitiesDictionary,
+                            piiResult, entityTaxonyResult, sentimentV3Prediction);
+                        Console.WriteLine("\tPersisted: CosmosDB - SQL API");
+                    }
 
                 }; // EOF for loop
             }

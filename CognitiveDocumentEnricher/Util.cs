@@ -453,6 +453,66 @@ namespace CognitiveDocumentEnricher
             return new Tuple<string, OCRObjectResult>(ocrResultString, ocrObject);
         }
 
+        public static async Task<Tuple<string, OCRObjectResult>> OCRResultBatchReadFromImage(string imageFilePath, string apiVersion)
+        {
+            // Computer Vision URL
+            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
+            // return variables
+            var responseContent = string.Empty;
+            OCRObjectResult ocrObject = null;
+            string ocrResultString = string.Empty;
+
+            using (var httpClient = new HttpClient())
+            {
+                // Setup HttpClient
+                httpClient.BaseAddress = new Uri(urlString);
+
+                // Request headers
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                // Reads the contents of the specified local image
+                // into a byte array.
+                byte[] byteData = GetImageAsByteArray(imageFilePath);
+
+                // Adds the byte array as an octet stream to the request body.
+                using (ByteArrayContent content = new ByteArrayContent(byteData))
+                {
+                    content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+
+                    // Make request with resiliency policy (can retry http requests)
+                    var resilienyStrategy = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategy();
+                    var response = await resilienyStrategy.ExecuteAsync(() => httpClient.PostAsync(urlString, content));
+
+                    // read response and write to view
+                    // batch call, you need to wait for the "job" to finish
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var urlLocation = response.Headers.GetValues("Operation-Location").FirstOrDefault();
+                        var resilienyStrategyBatchJob = CognitiveServicesRetryPolicy.DefineAndRetrieveResiliencyStrategyForBatchJob();
+
+                        var ocrResultResponse = await resilienyStrategyBatchJob.ExecuteAsync(() => httpClient.GetAsync(urlLocation));
+
+                        if (ocrResultResponse.IsSuccessStatusCode)
+                        {
+                            ocrResultString = await ocrResultResponse.Content.ReadAsStringAsync();
+                            if (string.IsNullOrEmpty(ocrResultString))
+                            {
+                                var test = ocrResultString;
+                            }
+                        }
+
+                        ocrObject = JsonConvert.DeserializeObject<OCRObjectResult>(ocrResultString);
+                    }
+                    else
+                    {
+                        throw new Exception(response.StatusCode + " : " + response.ReasonPhrase);
+                    }
+                }
+            }
+
+            return new Tuple<string, OCRObjectResult>(ocrResultString, ocrObject);
+        }
 
         public static async Task<SentimentV3Response> SentimentV3PreviewPredictAsync(List<TextAnalyticsInput> documents)
         {
@@ -495,6 +555,18 @@ namespace CognitiveDocumentEnricher
             }
 
             return resizedImageStream;
+        }
+
+        public static byte[] GetImageAsByteArray(string imageFilePath)
+        {
+            // Open a read-only file stream for the specified file.
+            using (FileStream fileStream =
+                new FileStream(imageFilePath, FileMode.Open, FileAccess.Read))
+            {
+                // Read the file's contents into a byte array.
+                BinaryReader binaryReader = new BinaryReader(fileStream);
+                return binaryReader.ReadBytes((int)fileStream.Length);
+            }
         }
 
         // Writes to Azure Table Storage
@@ -619,8 +691,8 @@ namespace CognitiveDocumentEnricher
 
             var docID = category + documentName;
             Console.WriteLine("\tProcessing DocumentDB: " + docID);
-            var ocrPagesList = Util.GenerateDocumentPagesList("png", pages, category, documentName);
-            var financialTablePageList = Util.DocumentFinancialTablePagesList(ocrPagesList, category);
+            List<string> azureBlobOcrPagesList = Config.USE_AZURE_BLOB_STORAGE ?
+                Util.GenerateDocumentPagesList("png", pages, category, documentName) : new List<string>();
             var topThreeClassificationNames = new List<string>();
             var topThreeClassificationProbabilities = new List<double>();
 
@@ -640,13 +712,10 @@ namespace CognitiveDocumentEnricher
                 Pages = pages,
                 TextSize = textOcrResult.Length,
                 TextOcrResult = textOcrResult,
-                OcrPagesList = ocrPagesList,
                 SentimentAnalysis = sentimentV3Prediction,
-                JsonPagesList = Util.GenerateDocumentPagesList("json", pages, category, documentName),
-                //DocumentClassificationNames = topThreeClassificationNamesDictionary.TryGetValue(documentName, out topThreeClassificationNames) ? topThreeClassificationNames : null,
-                //DocumentClassificationProbabilities = topThreeClassificationProbabilitiesDictionary.TryGetValue(documentName, out topThreeClassificationProbabilities) ? topThreeClassificationProbabilities : null,
-                //DocumentFinancialTablePages = financialTablePageList.Select(a => a.Item1).ToList(),
-                //DocumentFinancialTablePagePredictions = financialTablePageList.Select(a => a.Item2).ToList(),
+                AzureBlobJsonPagesList = Config.USE_AZURE_BLOB_STORAGE ? 
+                    Util.GenerateDocumentPagesList("json", pages, category, documentName) : new List<string>(),
+                AzureBlobOcrPagesList = azureBlobOcrPagesList,
                 PIIEmails = piiResult.Emails,
                 PIIEmailsCount = piiResult.Emails.Count,
                 PIIAddresses = piiResult.Addresses,
@@ -659,18 +728,25 @@ namespace CognitiveDocumentEnricher
                 //HasFinancialTables = (financialTablePageList.Count > 0) ? true : false
             };
 
-            // Write JSON to Blob Storage
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
-            var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
-            var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
-            var enrichedDocumentLocation = enrichmentContainer.GetBlockBlobReference(fullEnrichedDocumentPath);
 
-            byte[] byteArray = Encoding.UTF8.GetBytes(jsonString);
-            using (MemoryStream ms = new MemoryStream(byteArray))
+            // Write JSON to Blob Storage
+            if (Config.USE_AZURE_BLOB_STORAGE)
             {
-                enrichedDocumentLocation.UploadFromStream(ms);
+                var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
+                var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
+                var enrichedDocumentLocation = enrichmentContainer.GetBlockBlobReference(fullEnrichedDocumentPath);
+
+                byte[] byteArray = Encoding.UTF8.GetBytes(jsonString);
+                using (MemoryStream ms = new MemoryStream(byteArray))
+                {
+                    enrichedDocumentLocation.UploadFromStream(ms);
+                }
             }
+
+            // Write JSON to Local Disk
+            System.IO.File.WriteAllText(Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS + @"\" + fullEnrichedDocumentPath, jsonString);
 
             CreateNewDoc(documentDbClient, Config.COSMOSDB_DOCUMENTS_SELFLINK, documentToProcess);
         }
@@ -785,7 +861,7 @@ namespace CognitiveDocumentEnricher
 
         private static async Task CreateNewDoc(DocumentClient client, string documentsFeed, object document)
         {
-            Util.CreateDocument(client, documentsFeed, document).Wait();
+            await Util.CreateDocument(client, documentsFeed, document);
         }
 
         public static async Task CreateDocument(DocumentClient client, string documentsFeed, object document)
