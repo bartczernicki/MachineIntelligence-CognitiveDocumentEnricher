@@ -18,6 +18,15 @@ namespace CognitiveDocumentEnricher
             Console.ResetColor();
 
             Console.WriteLine("--------------------------------");
+
+            if (!Config.USE_COGNITIVE_SERVICES_V2 && !Config.USE_COGNITIVE_SERVICES_V3)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("You must have either Cognitive Services V2 or V3 enabled in the Config file.");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
             Console.WriteLine("Use Cognitive Services Bing Entity Search: " + Config.USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH);
             Console.WriteLine("Use Azure Blob Storage: " + Config.USE_AZURE_BLOB_STORAGE);
             Console.WriteLine("Use Azure Table Storage: " + Config.USE_AZURE_TABLE_STORAGE);
@@ -32,7 +41,6 @@ namespace CognitiveDocumentEnricher
             var scoringTableEntities = new List<Microsoft.Azure.CosmosDB.Table.DynamicTableEntity>();
             var topThreeClassificationNamesDictionary = new Dictionary<string, List<string>>();
             var topThreeClassificationProbabilitiesDictionary = new Dictionary<string, List<double>>();
-            var piiResultV2 = new PIIResult();
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Extracting content from documents...");
@@ -361,52 +369,66 @@ namespace CognitiveDocumentEnricher
                         ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItem));
                     }
 
+                    List<string> keyPhrasesV2 = new List<string>();
+                    List<string> entitiesV2 = new List<string>();
+                    var piiResultV2 = new PIIResult();
+                    string distinctKeyPhraseString = string.Empty;
+                    string distinctEntitiesString = string.Empty;
 
-                    // Key Phrases - V2
-                    Console.WriteLine("\tKey Phrases V2...");
-                    var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases);
-                    var keyPhrasesV2 = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
-                    var distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.Distinct().ToArray());
-                    keyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.ToArray());
-
-                    // Entities - V2
-                    Console.WriteLine("\tEntities V2...");
-                    var entitiesRecords = keyPhraseResult.Item2.Documents.SelectMany(i => i.Entities).Where(a => Helpers.IsEntity(a.Name) ).ToList();
-                    var entitiesV2 = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).ToList();
-                    var distinctEntitiesString = string.Join(" ;;;; ", entitiesV2.Distinct().ToArray());
-                    entitiesString = string.Join(" ;;;; ", entitiesV2.ToArray());
-
-                    // PII Result - V2
-                    Console.WriteLine("\tPII Information V2...");
-                    piiResultV2 = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
-
-
-                    // Key Phrases - V3
-                    Console.WriteLine("\tKey Phrases V3...");
-                    var textAnalyticsV3KeyPhrasesPrediction = CognitiveServices.TextAnalyticsKeyPhrasesV3PreviewAsync(ocrPhrases).Result;
-                    var keyPhrasesV3 = textAnalyticsV3KeyPhrasesPrediction.documents.SelectMany(a => a.keyPhrases).ToList();
-
-                    // Entities - V3
-                    Console.WriteLine("\tEntities V3...");
-                    var textAnalyticsV3EntitiesPrediction = CognitiveServices.TextAnalyticsEntitiesV3PreviewAsync(ocrPhrases).Result;
-                    List<CognitiveServiceClasses.Entities.Entity> entitiesV3 = textAnalyticsV3EntitiesPrediction.documents.SelectMany(a => a.entities).ToList();
-
-                    // PIIs - V3
-                    Console.WriteLine("\tPIIs V3...");
-                    var textAnalyticsV3PIIPrediction = CognitiveServices.TextAnalyticsPIIV3PreviewAsync(ocrPhrases).Result;
-                    List<CognitiveServiceClasses.PII.Entity> piiResultV3 = textAnalyticsV3PIIPrediction.documents.SelectMany(a => a.entities).ToList();
-
-                    // Sentiment Analysis - V3
-                    Console.WriteLine("\tSentiment Analysis V3...");
-                    var textAnalyticsInput = new TextAnalyticsInput()
+                    if (Config.USE_COGNITIVE_SERVICES_V2)
                     {
-                        Id = "1",
-                        Text = fileTotalOcr.Length > 5100 ? fileTotalOcr.Substring(0, 5100) : fileTotalOcr
-                    };
+                        // Key Phrases - V2
+                        Console.WriteLine("\tKey Phrases V2...");
+                        var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases);
+                        keyPhrasesV2 = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
+                        distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.Distinct().ToArray());
+                        keyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.ToArray());
 
-                    var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
+                        // Entities - V2
+                        Console.WriteLine("\tEntities V2...");
+                        var entitiesRecords = keyPhraseResult.Item2.Documents.SelectMany(i => i.Entities).Where(a => Helpers.IsEntity(a.Name)).ToList();
+                        entitiesV2 = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).ToList();
+                        distinctEntitiesString = string.Join(" ;;;; ", entitiesV2.Distinct().ToArray());
+                        entitiesString = string.Join(" ;;;; ", entitiesV2.ToArray());
 
-                    var sentimentV3Prediction = CognitiveServices.TextAnalyticsSentimentAnalysisV3PreviewAsync(textAnalyticsInputs).Result;
+                        // PII Result - V2
+                        Console.WriteLine("\tPII Information V2...");
+                        piiResultV2 = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
+                    }
+
+                    List<string> keyPhrasesV3 = new List<string>();
+                    List<CognitiveServiceClasses.Entities.Entity> entitiesV3 = new List<CognitiveServiceClasses.Entities.Entity>();
+                    List<CognitiveServiceClasses.PII.Entity> piiResultV3 = new List<CognitiveServiceClasses.PII.Entity>();
+                    SentimentV3Response sentimentV3Prediction = new SentimentV3Response();
+
+                    if (Config.USE_COGNITIVE_SERVICES_V3)
+                    {
+                        // Key Phrases - V3
+                        Console.WriteLine("\tKey Phrases V3...");
+                        var textAnalyticsV3KeyPhrasesPrediction = CognitiveServices.TextAnalyticsKeyPhrasesV3PreviewAsync(ocrPhrases).Result;
+                        keyPhrasesV3 = textAnalyticsV3KeyPhrasesPrediction.documents.SelectMany(a => a.keyPhrases).ToList();
+
+                        // Entities - V3
+                        Console.WriteLine("\tEntities V3...");
+                        var textAnalyticsV3EntitiesPrediction = CognitiveServices.TextAnalyticsEntitiesV3PreviewAsync(ocrPhrases).Result;
+                        entitiesV3 = textAnalyticsV3EntitiesPrediction.documents.SelectMany(a => a.entities).ToList();
+
+                        // PIIs - V3
+                        Console.WriteLine("\tPIIs V3...");
+                        var textAnalyticsV3PIIPrediction = CognitiveServices.TextAnalyticsPIIV3PreviewAsync(ocrPhrases).Result;
+                        piiResultV3 = textAnalyticsV3PIIPrediction.documents.SelectMany(a => a.entities).ToList();
+
+                        // Sentiment Analysis - V3
+                        Console.WriteLine("\tSentiment Analysis V3...");
+                        var textAnalyticsInput = new TextAnalyticsInput()
+                        {
+                            Id = "1",
+                            Text = fileTotalOcr.Length > 5100 ? fileTotalOcr.Substring(0, 5100) : fileTotalOcr
+                        };
+                        var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
+                        sentimentV3Prediction = CognitiveServices.TextAnalyticsSentimentAnalysisV3PreviewAsync(textAnalyticsInputs).Result;
+                    }
+
 
                     List<BingEntityData> entityTaxonyResult = new List<BingEntityData>();
 

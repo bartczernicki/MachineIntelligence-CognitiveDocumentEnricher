@@ -158,20 +158,27 @@ namespace CognitiveDocumentEnricher
             document.TextAnalyticsEntitiesResult = entities;
             document.TextAnalyticsDistinctEntititesResult = new string(distinctEntitiesString.Take(31999).ToArray());
             document.TextAnalyticsEntitiesTaxonomiesResult = entityTaxonomies;
-            document.Uri = string.Empty;
             document.TextSize = size;
             document.Pages = pages;
             document.Uri = uri;
             document.DocumentType = documentType;
             document.DocumentSizeInBytes = documentSizeInBytes;
-            document.PIIEmailsCount = piiResultV2.Emails.Count;
-            document.PIIAddressesCount = piiResultV2.Addresses.Count;
-            document.PIIPhoneNumbersCount = piiResultV2.PhoneNumbers.Count;
-            document.PIISSNSCount = piiResultV2.SSNs.Count;
-            document.SentimentAnalysis =
-                "Positive: " + sentimentV3Prediction.Documents[0].DocumentScores.Positive +
-                ", Neutral: " + sentimentV3Prediction.Documents[0].DocumentScores.Neutral +
-                ", Negative: " + sentimentV3Prediction.Documents[0].DocumentScores.Negative;
+
+            if (piiResultV2.Addresses != null)
+            {
+                document.PIIEmailsCount = piiResultV2.Emails.Count;
+                document.PIIAddressesCount = piiResultV2.Addresses.Count;
+                document.PIIPhoneNumbersCount = piiResultV2.PhoneNumbers.Count;
+                document.PIISSNSCount = piiResultV2.SSNs.Count;
+            }
+
+            if (sentimentV3Prediction.Documents != null)
+            {
+                document.SentimentAnalysis =
+                    "Positive: " + sentimentV3Prediction.Documents[0].DocumentScores.Positive +
+                    ", Neutral: " + sentimentV3Prediction.Documents[0].DocumentScores.Neutral +
+                    ", Negative: " + sentimentV3Prediction.Documents[0].DocumentScores.Negative;
+            }
 
             // Create the TableOperation object that inserts the customer entity.
             var insertOperation = WindowsAzureTable.TableOperation.InsertOrReplace(document);
@@ -274,6 +281,7 @@ namespace CognitiveDocumentEnricher
                 TextAnalyticsV3KeyPhrases = keyPhrasesV3,
                 TextAnalyticsV3KeyPhrasesDistinct = keyPhrasesV3.Distinct().ToList(),
                 TextAnalyticsV3SentimentAnalysis = sentimentV3Prediction,
+                TextAnalyticsV3SentimentAnalysisPositive = sentimentV3Prediction,
                 TextOcrResult = textOcrResult,
                 AzureBlobJsonPagesList = Config.USE_AZURE_BLOB_STORAGE ?
                     Util.GenerateDocumentPagesList("json", pages, category, documentName) : new List<string>(),

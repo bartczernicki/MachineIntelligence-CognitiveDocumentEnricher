@@ -11,6 +11,8 @@ namespace CognitiveDocumentEnricher
         public static readonly string LOCAL_LOCATION_FILES_ERRORS;
 
         // Cognitive Services
+        public static readonly bool USE_COGNITIVE_SERVICES_V2;
+        public static readonly bool USE_COGNITIVE_SERVICES_V3;
         public static readonly bool USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH;
 
         public static readonly string COGNITIVE_SERVICES_KEY;
@@ -46,6 +48,8 @@ namespace CognitiveDocumentEnricher
             LOCAL_LOCATION_FILES_ERRORS = ConfigurationManager.AppSettings["LOCAL_LOCATION_FILES_ERRORS"];
 
             // 2) Cognitive Services
+            USE_COGNITIVE_SERVICES_V2 = Convert.ToBoolean(ConfigurationManager.AppSettings["USE_COGNITIVE_SERVICES_V2"]);
+            USE_COGNITIVE_SERVICES_V3 = Convert.ToBoolean(ConfigurationManager.AppSettings["USE_COGNITIVE_SERVICES_V3"]);
             USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH = Convert.ToBoolean(ConfigurationManager.AppSettings["USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH"]);
 
             COGNITIVE_SERVICES_KEY = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_KEY"];
