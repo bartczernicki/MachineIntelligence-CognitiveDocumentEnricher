@@ -280,8 +280,8 @@ namespace CognitiveDocumentEnricher
                         var cloudOcrPath = (basePath + ".json").ToLower();
 
                         // Use API that passes image binary directly
-                        var ocrResult = Util.OCRResultBatchReadFromImage(fullFileImageName, "v2.1").Result;
-                        //var ocrResult = Util.OCRResultBatchRead(imageUrl, "v2.1").Result;
+                        var ocrResult = CognitiveServices.VisionOCRResultBatchReadFromImageAsync(fullFileImageName, "v2.1").Result;
+                        //var ocrResult = CognitiveServices.OCRResultBatchRead(imageUrl, "v2.1").Result;
 
                         if (Config.USE_AZURE_BLOB_STORAGE)
                         {
@@ -361,9 +361,9 @@ namespace CognitiveDocumentEnricher
                         ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItem));
                     }
 
-                    var keyPhraseResult = Util.GetKeyPhrasesAndEntities(ocrPhrases);
+                    var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases);
                     Console.WriteLine("\tPII Information...");
-                    piiResult = Util.GetPIIResponse(ocrPhrases);
+                    piiResult = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
 
                     // Key Phrases
                     Console.WriteLine("\tKey Phrases & Entities...");
@@ -385,14 +385,14 @@ namespace CognitiveDocumentEnricher
                         Text = fileTotalOcr.Length > 5100 ? fileTotalOcr.Substring(0, 5100) : fileTotalOcr
                     };
                     var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
-                    var sentimentV3Prediction = Util.SentimentV3PreviewPredictAsync(textAnalyticsInputs).Result;
+                    var sentimentV3Prediction = CognitiveServices.TextAnalyticsSentimentAnalysisV3PreviewAsync(textAnalyticsInputs).Result;
 
                     List<BingEntityData> entityTaxonyResult = new List<BingEntityData>();
 
                     if (Config.USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH)
                     {
                         Console.WriteLine("\tRetrieving Bing Entitites...");
-                        entityTaxonyResult = Util.GetEntitiesSearchResponse(entities);
+                        entityTaxonyResult = CognitiveServices.BingEntities(entities);
                         Console.WriteLine("\tFinished Retrieving Bing Entitites.");
                     }
 

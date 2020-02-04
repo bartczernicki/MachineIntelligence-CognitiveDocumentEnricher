@@ -275,6 +275,7 @@
     <Compile Include="ApiKeyServiceClientCredentialsContentModerator.cs" />
     <Compile Include="ApiKeyServiceClientCredentialsEntitySearch.cs" />
     <Compile Include="BingEntityData.cs" />
+    <Compile Include="CognitiveServices.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="CosmosDbDocumentEntity.cs" />
     <Compile Include="CustomVisionObjectResult.cs" />
