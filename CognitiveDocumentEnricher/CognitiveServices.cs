@@ -104,7 +104,7 @@ namespace CognitiveDocumentEnricher
         /// </summary>
         /// <param name="keyPhrasesSamples"></param>
         /// <returns></returns>
-        public static Tuple<KeyPhraseBatchResult, EntitiesBatchResult> TextAnalyticsKeyPhrasesAndEntities(List<KeyValuePair<string, string>> keyPhrasesSamples)
+        public static Tuple<KeyPhraseBatchResult, EntitiesBatchResult> TextAnalyticsKeyPhrasesAndEntities(List<KeyValuePair<string, string>> keyPhrasesSamples, ref CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
             var creds = new ApiKeyServiceClientCredentials();
 
@@ -146,10 +146,12 @@ namespace CognitiveDocumentEnricher
                     var keyPhraseMiniBatchResult = client.KeyPhrasesAsync(true,
                         new MultiLanguageBatchInput(multiLanguageInputsToProcess)).Result;
                     keyPhraseBatchResults.Add(keyPhraseMiniBatchResult);
+                    cognitiveServicesApiCalls.ApiCallV2Count++;
 
                     var entitiesMiniBatchResult = client.EntitiesAsync(true,
                         new MultiLanguageBatchInput(multiLanguageInputsToProcess)).Result;
                     entityBatchResults.Add(entitiesMiniBatchResult);
+                    cognitiveServicesApiCalls.ApiCallV2Count++;
                 }
             }
 
@@ -171,7 +173,7 @@ namespace CognitiveDocumentEnricher
         /// </summary>
         /// <param name="ocrPhrasesSamples"></param>
         /// <returns></returns>
-        public static PIIResult TextAnalyticsPIIResultV2(List<KeyValuePair<string, string>> ocrPhrasesSamples)
+        public static PIIResult TextAnalyticsPIIResultV2(List<KeyValuePair<string, string>> ocrPhrasesSamples, ref CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
             var contentModeratorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentialsContentModerator())
             {
@@ -199,6 +201,7 @@ namespace CognitiveDocumentEnricher
                         var result = contentModeratorClient.TextModeration.ScreenText("text/plain",
                             new MemoryStream(Encoding.UTF8.GetBytes(truncatedTextForModerator)),
                                 string.Empty, true, true, null, true);
+                        cognitiveServicesApiCalls.ApiCallV2Count++;
 
                         // Check if PII is not NULL
                         if (!(result.PII is null))

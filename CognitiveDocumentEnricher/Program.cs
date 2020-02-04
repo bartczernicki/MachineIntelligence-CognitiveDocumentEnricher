@@ -64,6 +64,9 @@ namespace CognitiveDocumentEnricher
                 // 2) Process Files
                 for (int fileNum = 0; fileNum != files.Count; fileNum++)
                 {
+                    // Cognitive Services API Calls
+                    var cognitiveServicesApiCalls = new CognitiveServicesApiCalls();
+
                     // Retrieve the file path
                     filePath = files[fileNum];
 
@@ -290,6 +293,7 @@ namespace CognitiveDocumentEnricher
                         // Use API that passes image binary directly
                         var ocrResult = CognitiveServices.VisionOCRResultBatchReadFromImageAsync(fullFileImageName, "v2.1").Result;
                         //var ocrResult = CognitiveServices.OCRResultBatchRead(imageUrl, "v2.1").Result;
+                        cognitiveServicesApiCalls.ApiCallCount++;
 
                         if (Config.USE_AZURE_BLOB_STORAGE)
                         {
@@ -379,7 +383,7 @@ namespace CognitiveDocumentEnricher
                     {
                         // Key Phrases - V2
                         Console.WriteLine("\tKey Phrases V2...");
-                        var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases);
+                        var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases, ref cognitiveServicesApiCalls);
                         keyPhrasesV2 = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
                         distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.Distinct().ToArray());
                         keyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.ToArray());
@@ -393,7 +397,7 @@ namespace CognitiveDocumentEnricher
 
                         // PII Result - V2
                         Console.WriteLine("\tPII Information V2...");
-                        piiResultV2 = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
+                        piiResultV2 = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases, ref cognitiveServicesApiCalls);
                     }
 
                     List<string> keyPhrasesV3 = new List<string>();
@@ -407,16 +411,19 @@ namespace CognitiveDocumentEnricher
                         Console.WriteLine("\tKey Phrases V3...");
                         var textAnalyticsV3KeyPhrasesPrediction = CognitiveServices.TextAnalyticsKeyPhrasesV3PreviewAsync(ocrPhrases).Result;
                         keyPhrasesV3 = textAnalyticsV3KeyPhrasesPrediction.documents.SelectMany(a => a.keyPhrases).ToList();
+                        cognitiveServicesApiCalls.ApiCallV3Count++;
 
                         // Entities - V3
                         Console.WriteLine("\tEntities V3...");
                         var textAnalyticsV3EntitiesPrediction = CognitiveServices.TextAnalyticsEntitiesV3PreviewAsync(ocrPhrases).Result;
                         entitiesV3 = textAnalyticsV3EntitiesPrediction.documents.SelectMany(a => a.entities).ToList();
+                        cognitiveServicesApiCalls.ApiCallV3Count++;
 
                         // PIIs - V3
                         Console.WriteLine("\tPIIs V3...");
                         var textAnalyticsV3PIIPrediction = CognitiveServices.TextAnalyticsPIIV3PreviewAsync(ocrPhrases).Result;
                         piiResultV3 = textAnalyticsV3PIIPrediction.documents.SelectMany(a => a.entities).ToList();
+                        cognitiveServicesApiCalls.ApiCallV3Count++;
 
                         // Sentiment Analysis - V3
                         Console.WriteLine("\tSentiment Analysis V3...");
@@ -427,6 +434,7 @@ namespace CognitiveDocumentEnricher
                         };
                         var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
                         sentimentV3Prediction = CognitiveServices.TextAnalyticsSentimentAnalysisV3PreviewAsync(textAnalyticsInputs).Result;
+                        cognitiveServicesApiCalls.ApiCallV3Count++;
                     }
 
 
@@ -439,19 +447,6 @@ namespace CognitiveDocumentEnricher
                         Console.WriteLine("\tFinished Retrieving Bing Entitites.");
                     }
 
-                    // var len1 = distinctKeyPhraseString.Length;
-                    // var len2 = keyPhraseString.Length;
-                    
-                    //// Build the keyphrase string to be persisted
-                    //for (int k = 0; k != keyPhraseResult.Documents.Count; k++)
-                    //{
-                    //    if (keyPhraseResult.Documents[k].KeyPhrases.Count > 0)
-                    //    {
-                    //        var tempPhraseString = string.Join(" ;;;; ", keyPhraseResult.Documents[k].KeyPhrases.ToArray());
-                    //        keyPhraseString += tempPhraseString;
-                    //        // Console.WriteLine($"Key phrases of \"{ocrPhrases[k].Value}\": {keyPhraseString}");
-                    //    }
-                    //}
 
                     // Add up OCR pages & Process Key Entities
                     processedTrainingFiles.Add(cleanFileName, new Tuple<string, string, string>(cleanCategory, fileTotalOcr, keyPhraseString));
@@ -470,7 +465,8 @@ namespace CognitiveDocumentEnricher
                             entitiesString, distinctEntitiesString,
                             pages, uri, documentType, documentSizeInBytes,
                             piiResultV2, piiResultV3,
-                            entityTaxonyResult, sentimentV3Prediction);
+                            entityTaxonyResult, sentimentV3Prediction,
+                            cognitiveServicesApiCalls);
                         Console.WriteLine("\tPersisted: Azure Table Storage");
                     }
 
@@ -485,7 +481,8 @@ namespace CognitiveDocumentEnricher
                             entitiesV2, entitiesV3,
                             pages, uri, documentType, documentSizeInBytes,
                             piiResultV2, piiResultV3,
-                            entityTaxonyResult, sentimentV3Prediction);
+                            entityTaxonyResult, sentimentV3Prediction,
+                            cognitiveServicesApiCalls);
                         Console.WriteLine("\tPersisted: CosmosDB - SQL API");
                     }
 
@@ -495,7 +492,8 @@ namespace CognitiveDocumentEnricher
                         entitiesV2, entitiesV3,
                         pages, uri, documentType, documentSizeInBytes,
                         piiResultV2, piiResultV3,
-                        entityTaxonyResult, sentimentV3Prediction);
+                        entityTaxonyResult, sentimentV3Prediction,
+                        cognitiveServicesApiCalls);
                     Console.WriteLine("\tPersisted: Local Storage");
 
                 }; // EOF for loop

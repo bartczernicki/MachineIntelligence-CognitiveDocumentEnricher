@@ -104,7 +104,8 @@ namespace CognitiveDocumentEnricher
             int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
             List<BingEntityData> bingEntityDataResult,
-            SentimentV3Response sentimentV3Prediction)
+            SentimentV3Response sentimentV3Prediction,
+            CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
             ocrResult = ocrResult.Trim();
             keyPhraseResult = keyPhraseResult.Trim();
@@ -152,6 +153,10 @@ namespace CognitiveDocumentEnricher
 
             // Create a new customer entity.
             var document = new DocumentEntity(category, documentName);
+            document.CognitiveServicesApiCallsApiCallCount = cognitiveServicesApiCalls.ApiCallCount;
+            document.CognitiveServicesApiCallsApiCallV2Count = cognitiveServicesApiCalls.ApiCallV2Count;
+            document.CognitiveServicesApiCallsApiCallV3Count = cognitiveServicesApiCalls.ApiCallV3Count;
+            document.CognitiveServicesApiCallsTotalCount = cognitiveServicesApiCalls.TotalCount;
             document.OcrResult = ocrResult.Trim();
             document.TextAnalyticsKeyPhraseResult = keyPhraseResult;
             document.TextAnalyticsDistinctKeyPhraseResult = distinctKeyPhraseString;
@@ -195,13 +200,15 @@ namespace CognitiveDocumentEnricher
             int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
             List<BingEntityData> bingEntityDataResult,
-            SentimentV3Response sentimentV3Prediction)
+            SentimentV3Response sentimentV3Prediction,
+            CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
             var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
                 keyPhrasesV2, keyPhrasesV3,
                 entitiesV2, entitiesV3,
                 pages, uri, documentType,
-                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction);
+                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction,
+                cognitiveServicesApiCalls);
 
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
@@ -230,14 +237,16 @@ namespace CognitiveDocumentEnricher
             int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
             List<BingEntityData> bingEntityDataResult,
-            SentimentV3Response sentimentV3Prediction)
+            SentimentV3Response sentimentV3Prediction,
+            CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
 
             var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
                 keyPhrasesV2, keyPhrasesV3,
                 entitiesV2, entitiesV3,
                 pages, uri, documentType,
-                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction);
+                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction,
+                cognitiveServicesApiCalls);
 
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
@@ -252,7 +261,8 @@ namespace CognitiveDocumentEnricher
             List<string> entitiesV2, List<CognitiveServiceClasses.Entities.Entity> entitiesV3,
             int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
-            SentimentV3Response sentimentV3Prediction)
+            SentimentV3Response sentimentV3Prediction,
+            CognitiveServicesApiCalls cognitiveServicesApiCalls)
         {
             var docID = category + documentName;
 
@@ -268,6 +278,10 @@ namespace CognitiveDocumentEnricher
                 DocumentSizeInBytes = documentSizeInBytes,
                 Pages = pages,
                 TextSize = textOcrResult.Length,
+                CognitiveServicesApiCallsApiCallCount = cognitiveServicesApiCalls.ApiCallCount,
+                CognitiveServicesApiCallsApiCallV2Count = cognitiveServicesApiCalls.ApiCallV2Count,
+                CognitiveServicesApiCallsApiCallV3Count = cognitiveServicesApiCalls.ApiCallV3Count,
+                CognitiveServicesApiCallsTotalCount = cognitiveServicesApiCalls.TotalCount,
                 TextAnalyticsV2KeyPhrasesCount = keyPhrasesV2.Count(),
                 TextAnalyticsV2KeyPhrases = keyPhrasesV2,
                 TextAnalyticsV2KeyPhrasesDistinct = keyPhrasesV2.Distinct().ToList(),

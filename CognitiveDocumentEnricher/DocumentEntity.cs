@@ -17,6 +17,14 @@ namespace CognitiveDocumentEnricher
 
         public DocumentEntity() { }
 
+        public int CognitiveServicesApiCallsApiCallCount { get; set; }
+
+        public int CognitiveServicesApiCallsApiCallV2Count { get; set; }
+
+        public int CognitiveServicesApiCallsApiCallV3Count { get; set; }
+
+        public int CognitiveServicesApiCallsTotalCount { get; set; }
+
         public string Uri { get; set; }
 
         public string OcrResult { get; set; }
