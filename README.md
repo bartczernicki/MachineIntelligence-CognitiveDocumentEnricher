@@ -5,15 +5,15 @@ Note: For formal use cases using Search, please use Cognitive Search:
 https://docs.microsoft.com/en-us/azure/search/cognitive-search-concept-intro
 
 # Use Cases
-1) Want to test out combination of Cognitive Services, Machine Learning, Artificial Intelligence in a single application
+1) Desire to test out combination of Cognitive Services, Machine Learning, Artificial Intelligence in a single application
 2) Need explicit control of the file format libraries, Cognitive Services API versions (i.e. need additional metadata, support for very large/protected documents, additional niche document formats)
 3) Need orchestration to run offline from Azure cloud
 4) Need to use private Cognitive Services Container endpoints for API processing
 5) Need a complex & custom workflow (i.e. mixing existing C# business logic with AI)
-6) Can configure additional persistance outputs (Local, Table, CosmosDB storage etc.)
+6) Can configure additional persistance outputs (Local Storage, Azure Blob Storage, Azure Table, CosmosDB storage etc.)
 
 # Requirements
-Visual Studio 2017+, .NET 4.5.2+, Windows 10/Windows Server, Azure Subcription (Trial, MSDN or Enterprise)
+Visual Studio 2019 (built on 16.4), .NET 4.5.2+, Windows 10 or Windows Server 2012+, Azure Subcription (Free Trial, MSDN or Enterprise)
 
 ## Getting Started
 
