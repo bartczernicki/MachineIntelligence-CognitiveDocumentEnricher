@@ -367,13 +367,13 @@ namespace CognitiveDocumentEnricher
 
                     // Key Phrases
                     Console.WriteLine("\tKey Phrases & Entities...");
-                    var keyPhrases = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).Distinct().ToList();
+                    var keyPhrases = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
                     var distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrases.Distinct().ToArray());
                     keyPhraseString = string.Join(" ;;;; ", keyPhrases.ToArray());
 
                     // Entities
-                    var entitiesRecords = keyPhraseResult.Item2.Documents.SelectMany(i => i.Entities).Where(a => Helpers.IsEntity(a.Name) ).Distinct().ToList();
-                    var entities = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).Distinct().ToList();
+                    var entitiesRecords = keyPhraseResult.Item2.Documents.SelectMany(i => i.Entities).Where(a => Helpers.IsEntity(a.Name) ).ToList();
+                    var entities = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).ToList();
                     var distinctEntitiesString = string.Join(" ;;;; ", entities.Distinct().ToArray());
                     entitiesString = string.Join(" ;;;; ", entities.ToArray());
 
@@ -437,13 +437,20 @@ namespace CognitiveDocumentEnricher
 
                         //// CosmosDB SQL API
                         Util.WriteToCosmosDbStorageSQLApi(documentClient, cleanCategory, cleanFileName, fileTotalOcr,
-                            keyPhraseString, distinctKeyPhraseString,
-                            entitiesString, distinctEntitiesString,
+                            keyPhrases,
+                            entities,
                             pages, uri, documentType, documentSizeInBytes,
-                            topThreeClassificationNamesDictionary, topThreeClassificationProbabilitiesDictionary,
                             piiResult, entityTaxonyResult, sentimentV3Prediction);
                         Console.WriteLine("\tPersisted: CosmosDB - SQL API");
                     }
+
+                    //// CosmosDB SQL API
+                    Util.WriteToLocalStorage(cleanCategory, cleanFileName, fileTotalOcr,
+                        keyPhrases,
+                        entities,
+                        pages, uri, documentType, documentSizeInBytes,
+                        piiResult, entityTaxonyResult, sentimentV3Prediction);
+                    Console.WriteLine("\tPersisted: Local Storage");
 
                 }; // EOF for loop
             }

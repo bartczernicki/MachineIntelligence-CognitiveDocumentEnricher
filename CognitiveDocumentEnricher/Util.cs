@@ -255,7 +255,7 @@ namespace CognitiveDocumentEnricher
 
             // Getting key-phrases
             var lengthofText = keyPhrasesSamples.Select((v, i) => v.Value.ToString().Length).Sum();
-            Console.WriteLine(string.Format("\tDocs: {0}", keyPhrasesSamples.Count));
+            //Console.WriteLine(string.Format("\tDocs: {0}", keyPhrasesSamples.Count));
             Console.WriteLine(string.Format("\tCharacters: {0}", lengthofText));
 
             var multiLanguageInputs = (keyPhrasesSamples.Select((v, i) => new MultiLanguageInput(v.Key, i.ToString(), v.Value)).ToList());
@@ -652,81 +652,18 @@ namespace CognitiveDocumentEnricher
             cloudTable.Execute(insertOperation);
         }
 
-        public static void WriteToCosmosDbStorageTable(CosmosDbTable.CloudTable cloudTable, string category, string documentName, 
-            string ocrResult, string keyPhraseResult, string distinctKeyPhraseString, int pages, string uri, string documentType, long documentSizeInBytes,
-            PIIResult piiResult)
-        {
-            ocrResult = ocrResult.Trim();
-            var size = ocrResult.Length * sizeof(char);
-
-            // Create a new customer entity.
-            var document = new CosmosDbDocumentEntity(category, documentName);
-            document.TextOcrResult = ocrResult.Trim();
-            document.KeyPhraseResult = keyPhraseResult;
-            document.DistinctKeyPhraseResult = distinctKeyPhraseString;
-            document.Uri = string.Empty;
-            document.TextSize = size;
-            document.Pages = pages;
-            document.Uri = uri;
-            document.DocumentType = documentType;
-            document.DocumentSizeInBytes = documentSizeInBytes;
-
-            // Create the TableOperation object that inserts the customer entity.
-            var insertOperation = CosmosDbTable.TableOperation.InsertOrReplace(document);
-
-            // Execute the insert operation.
-            cloudTable.Execute(insertOperation);
-        }
 
         public static void WriteToCosmosDbStorageSQLApi(DocumentClient documentDbClient, string category, string documentName,
-            string textOcrResult, 
-            string keyPhraseResult, string distinctKeyPhraseString,
-            string entitiesResult, string distinctEntitiesResult,
-            int pages, string uri, string documentType, long documentSizeInBytes, 
-            Dictionary<string, List<string>>  topThreeClassificationNamesDictionary, 
-            Dictionary<string, List<double>> topThreeClassificationProbabilitiesDictionary,
+            string textOcrResult,
+            List<string> keyPhrases,
+            List<string> entities,
+            int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
             SentimentV3Response sentimentV3Prediction)
         {
-
-            var docID = category + documentName;
-            Console.WriteLine("\tProcessing DocumentDB: " + docID);
-            List<string> azureBlobOcrPagesList = Config.USE_AZURE_BLOB_STORAGE ?
-                Util.GenerateDocumentPagesList("png", pages, category, documentName) : new List<string>();
-            var topThreeClassificationNames = new List<string>();
-            var topThreeClassificationProbabilities = new List<double>();
-
-            dynamic documentToProcess = new
-            {
-                id = docID,
-                PartitionKey = category,
-                RowKey = documentName,
-                DocumentType = documentType,
-                DocumentSizeInBytes = documentSizeInBytes,
-                TextAnalyticsDistinctKeyPhraseResult = distinctKeyPhraseString,
-                TextAnalyticsKeyPhraseResult = keyPhraseResult,
-                TextAnalyticsEntitiesResult = entitiesResult,
-                TextAnalyticsDistinctEntitiesResult = distinctEntitiesResult,
-                TextAnalyticsEntities = entitiesResult.Split(new string[] { " ;;;; " }, StringSplitOptions.None).ToList(),
-                TextAnalyticsEntitiesTaxonomies = bingEntityDataResult.Select(a => a.Taxony).ToList(),
-                Pages = pages,
-                TextSize = textOcrResult.Length,
-                TextOcrResult = textOcrResult,
-                SentimentAnalysis = sentimentV3Prediction,
-                AzureBlobJsonPagesList = Config.USE_AZURE_BLOB_STORAGE ? 
-                    Util.GenerateDocumentPagesList("json", pages, category, documentName) : new List<string>(),
-                AzureBlobOcrPagesList = azureBlobOcrPagesList,
-                PIIEmails = piiResult.Emails,
-                PIIEmailsCount = piiResult.Emails.Count,
-                PIIAddresses = piiResult.Addresses,
-                PIIAddressesCount = piiResult.Addresses.Count,
-                PIIPhoneNumbers = piiResult.PhoneNumbers,
-                PIIPhoneNumbersCount = piiResult.PhoneNumbers.Count,
-                PIISSNs = piiResult.SSNs,
-                PIISSNSCount = piiResult.SSNs.Count,
-                BingEntitityDataFull = bingEntityDataResult
-                //HasFinancialTables = (financialTablePageList.Count > 0) ? true : false
-            };
+            var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
+                keyPhrases, entities, pages, uri, documentType,
+                documentSizeInBytes, piiResult, bingEntityDataResult, sentimentV3Prediction);
 
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
@@ -745,29 +682,75 @@ namespace CognitiveDocumentEnricher
                 }
             }
 
-            // Write JSON to Local Disk
-            System.IO.File.WriteAllText(Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS + @"\" + fullEnrichedDocumentPath, jsonString);
-
             CreateNewDoc(documentDbClient, Config.COSMOSDB_DOCUMENTS_SELFLINK, documentToProcess);
         }
 
-        public static void WriteCsvFile(Dictionary<string, Tuple<string, string, string>> trainingFiles)
-        {
-            var path = Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS + "trainingFile.csv";
 
-            using (var w = new StreamWriter(path))
-            {
-                foreach (var key in trainingFiles.Keys)
-                {
-                    var category = key;
-                    var name = trainingFiles[key].Item1;
-                    var ocrResult = trainingFiles[key].Item2;
-                    var line = string.Format("{0}||||{1}||||{2}", category, name, ocrResult);
-                    w.WriteLine(line);
-                    w.Flush();
-                }
-            }
+        public static void WriteToLocalStorage(string category, string documentName,
+            string textOcrResult, List<string> keyPhrases, List<string> entities,
+            int pages, string uri, string documentType, long documentSizeInBytes,
+            PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
+            SentimentV3Response sentimentV3Prediction)
+        {
+
+            var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
+                keyPhrases, entities, pages, uri, documentType,
+                documentSizeInBytes, piiResult, bingEntityDataResult, sentimentV3Prediction);
+
+            var jsonString = JsonConvert.SerializeObject(documentToProcess);
+            var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
+
+            // Write JSON to Local Disk
+            System.IO.File.WriteAllText(Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS + @"\" + fullEnrichedDocumentPath, jsonString);
         }
+
+
+        public static dynamic GetDocumentObject(string category, string documentName, string textOcrResult, 
+            List<string> keyPhrases, List<string> entities,
+            int pages, string uri, string documentType, long documentSizeInBytes,
+            PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
+            SentimentV3Response sentimentV3Prediction)
+        {
+            var docID = category + documentName;
+
+            List<string> azureBlobOcrPagesList = Config.USE_AZURE_BLOB_STORAGE ?
+            Util.GenerateDocumentPagesList("png", pages, category, documentName) : new List<string>();
+
+            dynamic documentToProcess = new
+            {
+                id = docID,
+                PartitionKey = category,
+                RowKey = documentName,
+                DocumentType = documentType,
+                DocumentSizeInBytes = documentSizeInBytes,
+                Pages = pages,
+                TextSize = textOcrResult.Length,
+                TextAnalyticsKeyPhrasesCount = keyPhrases.Count(),
+                TextAnalyticsKeyPhrases = keyPhrases,
+                TextAnalyticsKeyPhrasesDistinct = keyPhrases.Distinct().ToList(),
+                TextAnalyticsEntitiesCount = entities.Count(),
+                TextAnalyticsEntities = entities,
+                TextAnalyticsEntitiesDistinct = entities.Distinct().ToList(),
+                TextAnalyticsEntitiesBingTaxonomies = bingEntityDataResult.Select(a => a.Taxony).ToList(),
+                TextOcrResult = textOcrResult,
+                SentimentAnalysis = sentimentV3Prediction,
+                AzureBlobJsonPagesList = Config.USE_AZURE_BLOB_STORAGE ?
+                    Util.GenerateDocumentPagesList("json", pages, category, documentName) : new List<string>(),
+                AzureBlobOcrPagesList = azureBlobOcrPagesList,
+                PIIEmails = piiResult.Emails,
+                PIIEmailsCount = piiResult.Emails.Count,
+                PIIAddresses = piiResult.Addresses,
+                PIIAddressesCount = piiResult.Addresses.Count,
+                PIIPhoneNumbers = piiResult.PhoneNumbers,
+                PIIPhoneNumbersCount = piiResult.PhoneNumbers.Count,
+                PIISSNs = piiResult.SSNs,
+                PIISSNSCount = piiResult.SSNs.Count,
+                BingEntitityDataFull = bingEntityDataResult
+            };
+
+            return documentToProcess;
+        }
+
 
         public static List<string> GenerateDocumentPagesList(string extension, int numberOfPages, string partition, string rowKey)
         {
