@@ -125,7 +125,7 @@ namespace CognitiveDocumentEnricher
                             System.IO.Directory.CreateDirectory(directoryCategoryPdfCache.ToLower());
                             System.IO.Directory.CreateDirectory(directoryFilePdfCache.ToLower());
 
-                            Console.WriteLine("\tCracking Documents into Pages...");
+                            Console.WriteLine("\tCracking Document into Pages...");
                             using (PdfReader pdfReader = new PdfReader(filePath))
                             {
                                 for (int pagenumber = 1; pagenumber <= pdfReader.NumberOfPages; pagenumber++)

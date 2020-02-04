@@ -17,6 +17,12 @@ namespace CognitiveDocumentEnricher
 
         public DocumentEntity() { }
 
+        public string DocumentType { get; set; }
+
+        public int TextSize { get; set; }
+
+        public int Pages { get; set; }
+
         public int CognitiveServicesApiCallsApiCallCount { get; set; }
 
         public int CognitiveServicesApiCallsApiCallV2Count { get; set; }
@@ -38,12 +44,6 @@ namespace CognitiveDocumentEnricher
         public string TextAnalyticsEntitiesTaxonomiesResult { get; set; }
 
         public string TextAnalyticsDistinctEntititesResult { get; set; }
-
-        public int TextSize { get; set; }
-
-        public int Pages { get; set; }
-
-        public string DocumentType { get; set; }
 
         public long DocumentSizeInBytes { get; set; }
 
