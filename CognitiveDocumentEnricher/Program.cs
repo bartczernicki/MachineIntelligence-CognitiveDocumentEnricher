@@ -42,72 +42,28 @@ namespace CognitiveDocumentEnricher
             var fileTypes = new List<Tuple<string, string>>();
             var currentFilesDirectory = string.Empty;
             var filePath = string.Empty;
-
-            // Initialize blob & table client
-
-
-            // Test or Full
-            var runTestFiles = false;
-
-            // read files
-            if (runTestFiles)
-            {
-                currentFilesDirectory = Config.LOCAL_LOCATION_FILES_ERRORS;
-            }
-            else
-            {
-                currentFilesDirectory = Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS;
-            }
+            
+            currentFilesDirectory = Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS;
 
             var docExt = new List<string> { ".DOC", ".DOCX", ".DOTX", ".DOT" };
             var files = Util.DirectoryTraverseForFiles(currentFilesDirectory).ToList();
 
             try
             {
-                // 1) Read the ML Scoring Table
-                //Console.WriteLine("Reading Scoring Table...");
-                //if (cosmosDbTableScoringTable != null)
-                //{
-                //    var query = new Microsoft.Azure.CosmosDB.Table.TableQuery<Microsoft.Azure.CosmosDB.Table.DynamicTableEntity>();
-                //    var result = cosmosDbTableScoringTable.ExecuteQuerySegmented<Microsoft.Azure.CosmosDB.Table.DynamicTableEntity>(query, null);
-                //    scoringTableEntities.AddRange(result.ToList());
-
-                //    if (result.ContinuationToken != null)
-                //    {
-                //        var result2 = cosmosDbTableScoringTable.ExecuteQuerySegmented<Microsoft.Azure.CosmosDB.Table.DynamicTableEntity>(query, result.ContinuationToken);
-                //        scoringTableEntities.AddRange(result2.ToList());
-                //    }
-
-                //    for (int i = 0; i != scoringTableEntities.Count; i++)
-                //    {
-                //        var scoredLabels = scoringTableEntities[i].Properties.Where(a => a.Key != "PartitionKey" && a.Key != "RowKey" && a.Key != "ScoredLabels")
-                //            .OrderByDescending(a => Convert.ToDouble(a.Value.DoubleValue)).Take(3).ToList();
-                //        var rowKey = scoringTableEntities[i].Properties.Where(a => a.Key == "RowKey").ToList()[0].Value.ToString();
-
-                //        var classes = scoredLabels.Select(a => a.Key).ToList();
-                //        var probabilities = scoredLabels.Select(a => Convert.ToDouble(a.Value.DoubleValue)).ToList();
-
-                //        topThreeClassificationNamesDictionary.Add(rowKey, classes);
-                //        topThreeClassificationProbabilitiesDictionary.Add(rowKey, probabilities);
-                //    }
-                //}
-                //Console.WriteLine("Reading Scoring Table...Finished");
-
-
                 Console.WriteLine("--------------------------------");
                 Console.WriteLine("Processing Files...");
 
                 // 2) Process Files
                 for (int fileNum = 0; fileNum != files.Count; fileNum++)
                 {
-                    // retrieve the file
+                    // Retrieve the file path
                     filePath = files[fileNum];
-                    //var filePath = activeFile;
-                    // retrieve the directory & file name
+
+                    // Retrieve the directory, file name & extension
                     var categoryAndFileNames = filePath.Replace(currentFilesDirectory, string.Empty)
                         .Split(new string[] { "\\" }, StringSplitOptions.None);
                     var originalDocumentExtension = Path.GetExtension(filePath).ToUpper();
-                    // Document Attributes (inserted into Cloud Table)
+
                     // Clean up file names
                     var category = categoryAndFileNames[0];
                     var cleanCategory = category.Replace(" ", "_").Replace(".", "_");
@@ -192,15 +148,14 @@ namespace CognitiveDocumentEnricher
                             workBook.Save(documentStream, Aspose.Cells.SaveFormat.Pdf);
                         }
                         // HTML & Word Documents
-                        else if (htmlDocuments.Contains(originalDocumentExtension))
-                            //|| wordDocuments.Contains(originalDocumentExtension))
+                        else if (htmlDocuments.Contains(originalDocumentExtension)
+                            || wordDocuments.Contains(originalDocumentExtension))
                         {
                             documentType = "Html";
                             Aspose.Words.Document document = new Aspose.Words.Document(file);
                             pages = document.PageCount;
                             document.Save(documentStream, Aspose.Words.SaveFormat.Pdf);
                         }
-
 
                         // Convert any documents into images
                         if (originalDocumentExtension == ".PDF")
@@ -267,7 +222,7 @@ namespace CognitiveDocumentEnricher
                         {
                             var pdfDocument = new Aspose.Pdf.Document(documentStream);
 
-                            // Done here as Aspose workaround
+                            // Done here as Aspose workaround for free version
                             for (int pageNum = 0; pageNum != pdfDocument.Pages.Count; pageNum++)
                             {
                                 if (pageNum == 4)
@@ -293,7 +248,6 @@ namespace CognitiveDocumentEnricher
                         // Cognitive Services Requirement: Convert to MB, Computer Vision images max out at 4 MB
                         // Fine for individual page documents
                         var megaBytes = Util.ConvertBytesToMegabytes(imageStream.Length);
-
 
                         do
                         {
@@ -325,6 +279,7 @@ namespace CognitiveDocumentEnricher
                         var cloudImagePath = (basePath + ".png").ToLower();
                         var cloudOcrPath = (basePath + ".json").ToLower();
 
+                        // Use API that passes image binary directly
                         var ocrResult = Util.OCRResultBatchReadFromImage(fullFileImageName, "v2.1").Result;
                         //var ocrResult = Util.OCRResultBatchRead(imageUrl, "v2.1").Result;
 
