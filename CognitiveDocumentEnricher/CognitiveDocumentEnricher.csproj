@@ -287,6 +287,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SentimentAnalysisClasses.cs" />
+    <Compile Include="TextAnalyticsV3EntitiesClasses.cs" />
+    <Compile Include="TextAnalyticsV3KeyPhrasesClasses.cs" />
+    <Compile Include="TextAnalyticsV3PIIClasses.cs" />
     <Compile Include="Util.cs" />
   </ItemGroup>
   <ItemGroup>

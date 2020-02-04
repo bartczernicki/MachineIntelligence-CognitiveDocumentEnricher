@@ -228,6 +228,144 @@ namespace CognitiveDocumentEnricher
         }
 
         /// <summary>
+        /// Text Analytics - V3 - Entities - Preview
+        /// </summary>
+        /// <param name="documents"></param>
+        /// <returns></returns>
+        public static async Task<CognitiveDocumentEnricher.CognitiveServiceClasses.Entities.TextAnalyticsV3Entities> TextAnalyticsEntitiesV3PreviewAsync(List<KeyValuePair<string, string>> keyValuePairs)
+        {
+            var textAnalyticsInputsV3KeyEntities = new List<TextAnalyticsInputV3>();
+
+            for (int i = 0; i != keyValuePairs.Count; i++)
+            {
+                var textAnalyticsInputV3KeyPhrases = new TextAnalyticsInputV3()
+                {
+                    id = (i + 1).ToString(),
+                    text = keyValuePairs[i].Value
+                };
+
+                textAnalyticsInputsV3KeyEntities.Add(textAnalyticsInputV3KeyPhrases);
+            }
+
+            var inputDocuments = new TextAnalyticsBatchInputV3()
+            {
+                Documents = textAnalyticsInputsV3KeyEntities
+            };
+            
+            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "text/analytics/v3.0-preview.1/entities/recognition/general";
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+
+                var httpContent = new StringContent(JsonConvert.SerializeObject(inputDocuments), Encoding.UTF8, "application/json");
+
+                var httpResponse = await httpClient.PostAsync(new Uri(uri), httpContent);
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                if (!httpResponse.StatusCode.Equals(HttpStatusCode.OK) || httpResponse.Content == null)
+                {
+                    throw new Exception(responseContent);
+                }
+
+                return JsonConvert.DeserializeObject<CognitiveDocumentEnricher.CognitiveServiceClasses.Entities.TextAnalyticsV3Entities>(responseContent, 
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            }
+        }
+
+        /// <summary>
+        /// Text Analytics - V3 - Key Phrases - Preview
+        /// </summary>
+        /// <param name="documents"></param>
+        /// <returns></returns>
+        public static async Task<CognitiveDocumentEnricher.CognitiveServiceClasses.KeyPhrases.TextAnalyticsV3KeyPhrases> TextAnalyticsKeyPhrasesV3PreviewAsync(List<KeyValuePair<string, string>> keyValuePairs)
+        {
+            var textAnalyticsInputsV3KeyPhrases = new List<TextAnalyticsInputV3>();
+
+            for (int i = 0; i != keyValuePairs.Count; i++)
+            {
+                var textAnalyticsInputV3KeyPhrases = new TextAnalyticsInputV3()
+                {
+                    id = (i + 1).ToString(),
+                    text = keyValuePairs[i].Value
+                };
+
+                textAnalyticsInputsV3KeyPhrases.Add(textAnalyticsInputV3KeyPhrases);
+            }
+
+            var inputDocuments = new TextAnalyticsBatchInputV3()
+            {
+                Documents = textAnalyticsInputsV3KeyPhrases
+            };
+
+            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview.1/keyPhrases";
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+
+                var httpContent = new StringContent(JsonConvert.SerializeObject(inputDocuments), Encoding.UTF8, "application/json");
+
+                var httpResponse = await httpClient.PostAsync(new Uri(uri), httpContent);
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                if (!httpResponse.StatusCode.Equals(HttpStatusCode.OK) || httpResponse.Content == null)
+                {
+                    throw new Exception(responseContent);
+                }
+
+                return JsonConvert.DeserializeObject<CognitiveDocumentEnricher.CognitiveServiceClasses.KeyPhrases.TextAnalyticsV3KeyPhrases>(responseContent,
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            }
+        }
+
+        /// <summary>
+        /// Text Analytics - V3 - PII - Preview
+        /// </summary>
+        /// <param name="documents"></param>
+        /// <returns></returns>
+        public static async Task<CognitiveDocumentEnricher.CognitiveServiceClasses.PII.TextAnalyticsV3PII> TextAnalyticsPIIV3PreviewAsync(List<KeyValuePair<string, string>> keyValuePairs)
+        {
+            var textAnalyticsInputsV3PIIs = new List<TextAnalyticsInputV3>();
+
+            for (int i = 0; i != keyValuePairs.Count; i++)
+            {
+                var textAnalyticsInputV3KeyPhrases = new TextAnalyticsInputV3()
+                {
+                    id = (i + 1).ToString(),
+                    text = keyValuePairs[i].Value
+                };
+
+                textAnalyticsInputsV3PIIs.Add(textAnalyticsInputV3KeyPhrases);
+            }
+
+            var inputDocuments = new TextAnalyticsBatchInputV3()
+            {
+                Documents = textAnalyticsInputsV3PIIs
+            };
+
+            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview.1/entities/recognition/pii";
+
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
+
+                var httpContent = new StringContent(JsonConvert.SerializeObject(inputDocuments), Encoding.UTF8, "application/json");
+
+                var httpResponse = await httpClient.PostAsync(new Uri(uri), httpContent);
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                if (!httpResponse.StatusCode.Equals(HttpStatusCode.OK) || httpResponse.Content == null)
+                {
+                    throw new Exception(responseContent);
+                }
+
+                return JsonConvert.DeserializeObject<CognitiveDocumentEnricher.CognitiveServiceClasses.PII.TextAnalyticsV3PII>(responseContent,
+                    new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
+            }
+        }
+
+        /// <summary>
         /// Text Analytics - V3 - Sentiment Analysis - Preview
         /// </summary>
         /// <param name="documents"></param>

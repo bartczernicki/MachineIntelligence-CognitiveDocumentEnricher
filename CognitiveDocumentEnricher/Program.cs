@@ -32,7 +32,7 @@ namespace CognitiveDocumentEnricher
             var scoringTableEntities = new List<Microsoft.Azure.CosmosDB.Table.DynamicTableEntity>();
             var topThreeClassificationNamesDictionary = new Dictionary<string, List<string>>();
             var topThreeClassificationProbabilitiesDictionary = new Dictionary<string, List<double>>();
-            var piiResult = new PIIResult();
+            var piiResultV2 = new PIIResult();
 
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Extracting content from documents...");
@@ -114,7 +114,7 @@ namespace CognitiveDocumentEnricher
                             System.IO.Directory.CreateDirectory(directoryCategoryPdfCache.ToLower());
                             System.IO.Directory.CreateDirectory(directoryFilePdfCache.ToLower());
 
-                            Console.WriteLine("\tCracking Pages...");
+                            Console.WriteLine("\tCracking Documents into Pages...");
                             using (PdfReader pdfReader = new PdfReader(filePath))
                             {
                                 for (int pagenumber = 1; pagenumber <= pdfReader.NumberOfPages; pagenumber++)
@@ -361,30 +361,51 @@ namespace CognitiveDocumentEnricher
                         ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItem));
                     }
 
+
+                    // Key Phrases - V2
+                    Console.WriteLine("\tKey Phrases V2...");
                     var keyPhraseResult = CognitiveServices.TextAnalyticsKeyPhrasesAndEntities(ocrPhrases);
-                    Console.WriteLine("\tPII Information...");
-                    piiResult = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
+                    var keyPhrasesV2 = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
+                    var distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.Distinct().ToArray());
+                    keyPhraseString = string.Join(" ;;;; ", keyPhrasesV2.ToArray());
 
-                    // Key Phrases
-                    Console.WriteLine("\tKey Phrases & Entities...");
-                    var keyPhrases = keyPhraseResult.Item1.Documents.SelectMany(i => i.KeyPhrases).Where(a => Helpers.IsEntity(a)).ToList();
-                    var distinctKeyPhraseString = string.Join(" ;;;; ", keyPhrases.Distinct().ToArray());
-                    keyPhraseString = string.Join(" ;;;; ", keyPhrases.ToArray());
-
-                    // Entities
+                    // Entities - V2
+                    Console.WriteLine("\tEntities V2...");
                     var entitiesRecords = keyPhraseResult.Item2.Documents.SelectMany(i => i.Entities).Where(a => Helpers.IsEntity(a.Name) ).ToList();
-                    var entities = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).ToList();
-                    var distinctEntitiesString = string.Join(" ;;;; ", entities.Distinct().ToArray());
-                    entitiesString = string.Join(" ;;;; ", entities.ToArray());
+                    var entitiesV2 = entitiesRecords.Select(i => i.Name.Replace(System.Environment.NewLine, string.Empty).Trim()).ToList();
+                    var distinctEntitiesString = string.Join(" ;;;; ", entitiesV2.Distinct().ToArray());
+                    entitiesString = string.Join(" ;;;; ", entitiesV2.ToArray());
 
-                    // Sentiment Analysis
-                    Console.WriteLine("\tSentiment Analysis...");
+                    // PII Result - V2
+                    Console.WriteLine("\tPII Information V2...");
+                    piiResultV2 = CognitiveServices.TextAnalyticsPIIResultV2(ocrPhrases);
+
+
+                    // Key Phrases - V3
+                    Console.WriteLine("\tKey Phrases V3...");
+                    var textAnalyticsV3KeyPhrasesPrediction = CognitiveServices.TextAnalyticsKeyPhrasesV3PreviewAsync(ocrPhrases).Result;
+                    var keyPhrasesV3 = textAnalyticsV3KeyPhrasesPrediction.documents.SelectMany(a => a.keyPhrases).ToList();
+
+                    // Entities - V3
+                    Console.WriteLine("\tEntities V3...");
+                    var textAnalyticsV3EntitiesPrediction = CognitiveServices.TextAnalyticsEntitiesV3PreviewAsync(ocrPhrases).Result;
+                    List<CognitiveServiceClasses.Entities.Entity> entitiesV3 = textAnalyticsV3EntitiesPrediction.documents.SelectMany(a => a.entities).ToList();
+
+                    // PIIs - V3
+                    Console.WriteLine("\tPIIs V3...");
+                    var textAnalyticsV3PIIPrediction = CognitiveServices.TextAnalyticsPIIV3PreviewAsync(ocrPhrases).Result;
+                    List<CognitiveServiceClasses.PII.Entity> piiResultV3 = textAnalyticsV3PIIPrediction.documents.SelectMany(a => a.entities).ToList();
+
+                    // Sentiment Analysis - V3
+                    Console.WriteLine("\tSentiment Analysis V3...");
                     var textAnalyticsInput = new TextAnalyticsInput()
                     {
                         Id = "1",
                         Text = fileTotalOcr.Length > 5100 ? fileTotalOcr.Substring(0, 5100) : fileTotalOcr
                     };
+
                     var textAnalyticsInputs = new List<TextAnalyticsInput> { textAnalyticsInput };
+
                     var sentimentV3Prediction = CognitiveServices.TextAnalyticsSentimentAnalysisV3PreviewAsync(textAnalyticsInputs).Result;
 
                     List<BingEntityData> entityTaxonyResult = new List<BingEntityData>();
@@ -392,7 +413,7 @@ namespace CognitiveDocumentEnricher
                     if (Config.USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH)
                     {
                         Console.WriteLine("\tRetrieving Bing Entitites...");
-                        entityTaxonyResult = CognitiveServices.BingEntities(entities);
+                        entityTaxonyResult = CognitiveServices.BingEntities(entitiesV2);
                         Console.WriteLine("\tFinished Retrieving Bing Entitites.");
                     }
 
@@ -426,7 +447,8 @@ namespace CognitiveDocumentEnricher
                             keyPhraseString, distinctKeyPhraseString,
                             entitiesString, distinctEntitiesString,
                             pages, uri, documentType, documentSizeInBytes,
-                            piiResult, entityTaxonyResult, sentimentV3Prediction);
+                            piiResultV2, piiResultV3,
+                            entityTaxonyResult, sentimentV3Prediction);
                         Console.WriteLine("\tPersisted: Azure Table Storage");
                     }
 
@@ -437,19 +459,21 @@ namespace CognitiveDocumentEnricher
 
                         //// CosmosDB SQL API
                         Util.WriteToCosmosDbStorageSQLApi(documentClient, cleanCategory, cleanFileName, fileTotalOcr,
-                            keyPhrases,
-                            entities,
+                            keyPhrasesV2, keyPhrasesV3,
+                            entitiesV2, entitiesV3,
                             pages, uri, documentType, documentSizeInBytes,
-                            piiResult, entityTaxonyResult, sentimentV3Prediction);
+                            piiResultV2, piiResultV3,
+                            entityTaxonyResult, sentimentV3Prediction);
                         Console.WriteLine("\tPersisted: CosmosDB - SQL API");
                     }
 
                     //// CosmosDB SQL API
                     Util.WriteToLocalStorage(cleanCategory, cleanFileName, fileTotalOcr,
-                        keyPhrases,
-                        entities,
+                        keyPhrasesV2, keyPhrasesV3,
+                        entitiesV2, entitiesV3,
                         pages, uri, documentType, documentSizeInBytes,
-                        piiResult, entityTaxonyResult, sentimentV3Prediction);
+                        piiResultV2, piiResultV3,
+                        entityTaxonyResult, sentimentV3Prediction);
                     Console.WriteLine("\tPersisted: Local Storage");
 
                 }; // EOF for loop

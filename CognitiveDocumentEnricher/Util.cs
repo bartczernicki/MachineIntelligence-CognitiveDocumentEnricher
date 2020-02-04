@@ -102,7 +102,8 @@ namespace CognitiveDocumentEnricher
             string keyPhraseResult, string distinctKeyPhraseString,
             string entities, string distinctEntitiesString,
             int pages, string uri, string documentType, long documentSizeInBytes,
-            PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
+            PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
+            List<BingEntityData> bingEntityDataResult,
             SentimentV3Response sentimentV3Prediction)
         {
             ocrResult = ocrResult.Trim();
@@ -163,10 +164,10 @@ namespace CognitiveDocumentEnricher
             document.Uri = uri;
             document.DocumentType = documentType;
             document.DocumentSizeInBytes = documentSizeInBytes;
-            document.PIIEmailsCount = piiResult.Emails.Count;
-            document.PIIAddressesCount = piiResult.Addresses.Count;
-            document.PIIPhoneNumbersCount = piiResult.PhoneNumbers.Count;
-            document.PIISSNSCount = piiResult.SSNs.Count;
+            document.PIIEmailsCount = piiResultV2.Emails.Count;
+            document.PIIAddressesCount = piiResultV2.Addresses.Count;
+            document.PIIPhoneNumbersCount = piiResultV2.PhoneNumbers.Count;
+            document.PIISSNSCount = piiResultV2.SSNs.Count;
             document.SentimentAnalysis =
                 "Positive: " + sentimentV3Prediction.Documents[0].DocumentScores.Positive +
                 ", Neutral: " + sentimentV3Prediction.Documents[0].DocumentScores.Neutral +
@@ -182,15 +183,18 @@ namespace CognitiveDocumentEnricher
 
         public static void WriteToCosmosDbStorageSQLApi(DocumentClient documentDbClient, string category, string documentName,
             string textOcrResult,
-            List<string> keyPhrases,
-            List<string> entities,
+            List<string> keyPhrasesV2, List<string> keyPhrasesV3,
+            List<string> entitiesV2, List<CognitiveServiceClasses.Entities.Entity> entitiesV3,
             int pages, string uri, string documentType, long documentSizeInBytes,
-            PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
+            PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
+            List<BingEntityData> bingEntityDataResult,
             SentimentV3Response sentimentV3Prediction)
         {
             var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
-                keyPhrases, entities, pages, uri, documentType,
-                documentSizeInBytes, piiResult, bingEntityDataResult, sentimentV3Prediction);
+                keyPhrasesV2, keyPhrasesV3,
+                entitiesV2, entitiesV3,
+                pages, uri, documentType,
+                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction);
 
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
@@ -213,16 +217,20 @@ namespace CognitiveDocumentEnricher
         }
 
 
-        public static void WriteToLocalStorage(string category, string documentName,
-            string textOcrResult, List<string> keyPhrases, List<string> entities,
+        public static void WriteToLocalStorage(string category, string documentName, string textOcrResult, 
+            List<string> keyPhrasesV2, List<string> keyPhrasesV3,
+            List<string> entitiesV2, List<CognitiveServiceClasses.Entities.Entity> entitiesV3,
             int pages, string uri, string documentType, long documentSizeInBytes,
-            PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
+            PIIResult piiResultV2, List<CognitiveServiceClasses.PII.Entity> piiResultV3,
+            List<BingEntityData> bingEntityDataResult,
             SentimentV3Response sentimentV3Prediction)
         {
 
             var documentToProcess = Util.GetDocumentObject(category, documentName, textOcrResult,
-                keyPhrases, entities, pages, uri, documentType,
-                documentSizeInBytes, piiResult, bingEntityDataResult, sentimentV3Prediction);
+                keyPhrasesV2, keyPhrasesV3,
+                entitiesV2, entitiesV3,
+                pages, uri, documentType,
+                documentSizeInBytes, piiResultV2, bingEntityDataResult, sentimentV3Prediction);
 
             var jsonString = JsonConvert.SerializeObject(documentToProcess);
             var fullEnrichedDocumentPath = category.ToLower() + @"\" + documentName.ToLower() + @"\fullEnrichedDocument.json";
@@ -233,7 +241,8 @@ namespace CognitiveDocumentEnricher
 
 
         public static dynamic GetDocumentObject(string category, string documentName, string textOcrResult, 
-            List<string> keyPhrases, List<string> entities,
+            List<string> keyPhrasesV2, List<string> keyPhrasesV3,
+            List<string> entitiesV2, List<CognitiveServiceClasses.Entities.Entity> entitiesV3,
             int pages, string uri, string documentType, long documentSizeInBytes,
             PIIResult piiResult, List<BingEntityData> bingEntityDataResult,
             SentimentV3Response sentimentV3Prediction)
@@ -252,26 +261,24 @@ namespace CognitiveDocumentEnricher
                 DocumentSizeInBytes = documentSizeInBytes,
                 Pages = pages,
                 TextSize = textOcrResult.Length,
-                TextAnalyticsKeyPhrasesCount = keyPhrases.Count(),
-                TextAnalyticsKeyPhrases = keyPhrases,
-                TextAnalyticsKeyPhrasesDistinct = keyPhrases.Distinct().ToList(),
-                TextAnalyticsEntitiesCount = entities.Count(),
-                TextAnalyticsEntities = entities,
-                TextAnalyticsEntitiesDistinct = entities.Distinct().ToList(),
-                TextAnalyticsEntitiesBingTaxonomies = bingEntityDataResult.Select(a => a.Taxony).ToList(),
+                TextAnalyticsV2KeyPhrasesCount = keyPhrasesV2.Count(),
+                TextAnalyticsV2KeyPhrases = keyPhrasesV2,
+                TextAnalyticsV2KeyPhrasesDistinct = keyPhrasesV2.Distinct().ToList(),
+                TextAnalyticsV2EntitiesCount = entitiesV2.Count(),
+                TextAnalyticsV2Entities = entitiesV2,
+                TextAnalyticsV2EntitiesDistinct = entitiesV2.Distinct().ToList(),
+                TextAnalyticsV2EntitiesBingTaxonomies = bingEntityDataResult.Select(a => a.Taxony).ToList(),
+                TextAnalyticsV3EntitiesCount = entitiesV3.Count(),
+                TextAnalyticsV3Entities = entitiesV3,
+                TextAnalyticsV3KeyPhrasesCount = keyPhrasesV3.Count(),
+                TextAnalyticsV3KeyPhrases = keyPhrasesV3,
+                TextAnalyticsV3KeyPhrasesDistinct = keyPhrasesV3.Distinct().ToList(),
+                TextAnalyticsV3SentimentAnalysis = sentimentV3Prediction,
                 TextOcrResult = textOcrResult,
-                SentimentAnalysis = sentimentV3Prediction,
                 AzureBlobJsonPagesList = Config.USE_AZURE_BLOB_STORAGE ?
                     Util.GenerateDocumentPagesList("json", pages, category, documentName) : new List<string>(),
                 AzureBlobOcrPagesList = azureBlobOcrPagesList,
-                PIIEmails = piiResult.Emails,
-                PIIEmailsCount = piiResult.Emails.Count,
-                PIIAddresses = piiResult.Addresses,
-                PIIAddressesCount = piiResult.Addresses.Count,
-                PIIPhoneNumbers = piiResult.PhoneNumbers,
-                PIIPhoneNumbersCount = piiResult.PhoneNumbers.Count,
-                PIISSNs = piiResult.SSNs,
-                PIISSNSCount = piiResult.SSNs.Count,
+                PIIResult = piiResult,
                 BingEntitityDataFull = bingEntityDataResult
             };
 

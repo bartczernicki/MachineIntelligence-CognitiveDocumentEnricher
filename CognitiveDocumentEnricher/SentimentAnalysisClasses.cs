@@ -23,6 +23,11 @@ namespace CognitiveDocumentEnricher
         public IList<TextAnalyticsInput> Documents { get; set; }
     }
 
+    public class TextAnalyticsBatchInputV3
+    {
+        public IList<TextAnalyticsInputV3> Documents { get; set; }
+    }
+
     public class TextAnalyticsInput
     {
         /// <summary>
@@ -39,6 +44,24 @@ namespace CognitiveDocumentEnricher
         /// The language code. Default is english ("en").
         /// </summary>
         public string LanguageCode { get; set; } = "en";
+    }
+
+    public class TextAnalyticsInputV3
+    {
+        /// <summary>
+        /// A unique, non-empty document identifier.
+        /// </summary>
+        public string id { get; set; }
+
+        /// <summary>
+        /// The input text to process.
+        /// </summary>
+        public string text { get; set; }
+
+        /// <summary>
+        /// The language code. Default is english ("en").
+        /// </summary>
+        public string language { get; set; } = "en";
     }
 
     public class DocumentSentiment
