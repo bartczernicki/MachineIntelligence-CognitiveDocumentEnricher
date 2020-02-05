@@ -385,8 +385,9 @@ namespace CognitiveDocumentEnricher
                 httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
 
                 var httpContent = new StringContent(JsonConvert.SerializeObject(inputDocuments), Encoding.UTF8, "application/json");
+                var uriEndpoint = new Uri(Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview/sentiment");
 
-                var httpResponse = await httpClient.PostAsync(new Uri(Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS_SENTIMENTv3), httpContent);
+                var httpResponse = await httpClient.PostAsync(uriEndpoint, httpContent);
                 var responseContent = await httpResponse.Content.ReadAsStringAsync();
 
                 if (!httpResponse.StatusCode.Equals(HttpStatusCode.OK) || httpResponse.Content == null)
