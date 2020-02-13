@@ -55,6 +55,11 @@ USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH - Set this to True to run the extracte
 
 USE_COSMOSDB_STORAGE - Setting this value to true will persist the extracted JSON file for each document in a NoSQL CosmosDB database that is easy to query.
 
+Sample Configuration section of the App.Config
+Note: In the example below both V2 and V3 APIs are used.  However, no cloud persistance nor any Bing Knowledge Graph extraction is leveraged.
+![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/AppConfigConfiguration.png)
+
+
 
 Screenshot of App.Config file
 ![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/SampleAppConfig.png)
