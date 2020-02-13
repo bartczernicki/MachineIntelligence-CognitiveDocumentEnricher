@@ -30,7 +30,7 @@ Note: Only the Cognitive Services are required to run the MachineIntelligence-Co
 
 
 Screenshot of Azure Portal of required resources
-![Azure Portal Resources](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/AzurePortal-ResourcesforEnrichment.png)
+![Azure Portal Resources](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/AzurePortal-ResourcesforEnrichmentv2.png)
 
 ## Set up:
 1) Create a blob storage container inside created storage account
