@@ -63,4 +63,4 @@ Note: In the example below both V2 and V3 APIs are used.  However, no cloud pers
 
 
 Screenshot of App.Config file
-![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/SampleAppConfig.png)
+![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/SampleAppConfigv2.png)
