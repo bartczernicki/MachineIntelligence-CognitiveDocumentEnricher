@@ -42,12 +42,19 @@ Screenshot of Azure Portal of required resources
 ## Configuration
 
 In the App.Config file there are several values that can be set to either True or False.
+
 USE_AZURE_BLOB_STORAGE - Setting this to True will write out the split images, JSON OCR as well as the Cognitive Services AI content to an Azure Blob Storage account.
+
 USE_AZURE_TABLE_STORAGE - Setting this to True will write out the high level information of the processed files to Azure Table Storage.  This is a great way to see a quick snapshot of the metadata (i.e. number of API calls, size of pages, number of PII information found) for each processed document
+
 USE_COGNITIVE_SERVICES_V2 - Use the v2.x version of the Cognitive Services APIs.  You must set either V2 or V3 to True.  Both can be set to True.
+
 USE_COGNITIVE_SERVICES_V3 - Use the v3.x version of the Cognitive Services APIs.  You must set either V2 or V3 to True.  Both can be set to True.
+
 USE_COGNITIVE_SERVICES_BING_ENTITY_SEARCH - Set this to True to run the extracted entitites through the Bing Knowledge Graph gaining additional taxonomy information (note: this is largerly provided in the V3 APIs)
+
 USE_COSMOSDB_STORAGE - Setting this value to true will persist the extracted JSON file for each document in a NoSQL CosmosDB database that is easy to query.
+
 
 Screenshot of App.Config file
 ![Sample App.Config](https://github.com/bartczernicki/MachineIntelligence-CognitiveDocumentEnricher/blob/master/Images/SampleAppConfig.png)
