@@ -27,10 +27,6 @@ namespace CognitiveDocumentEnricher
 {
     static class Util
     {
-        // Blob Storage Account
-        public static WindowsAzureStorage.CloudStorageAccount BlobStorageAccount = new WindowsAzureStorage.CloudStorageAccount(
-            new StorageCredentials(Config.STORAGE_ACCOUNT_NAME, Config.STORAGE_ACCOUNT_KEY),
-            true);
         // CosmosDB Storage Account
         // public static Microsoft.Azure.Storage.CloudStorageAccount CosmosDbStorageAccount = CosmosDbStorage.CloudStorageAccount.Parse(Config.COSMOSDB_CONNECTIONSTRING);
         // CosmosDB Storage Account - Scoring Table
@@ -216,7 +212,7 @@ namespace CognitiveDocumentEnricher
             // Write JSON to Blob Storage
             if (Config.USE_AZURE_BLOB_STORAGE)
             {
-                var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
+                var cloudStorageBloblClient = AzureStorage.BlobStorageAccount.CreateCloudBlobClient();
                 var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
                 var enrichedDocumentLocation = enrichmentContainer.GetBlockBlobReference(fullEnrichedDocumentPath);
 

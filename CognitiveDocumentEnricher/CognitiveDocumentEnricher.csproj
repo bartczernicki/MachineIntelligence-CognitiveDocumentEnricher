@@ -275,6 +275,7 @@
     <Compile Include="ApiKeyServiceClientCredentials.cs" />
     <Compile Include="ApiKeyServiceClientCredentialsContentModerator.cs" />
     <Compile Include="ApiKeyServiceClientCredentialsEntitySearch.cs" />
+    <Compile Include="AzureStorage.cs" />
     <Compile Include="BingEntityData.cs" />
     <Compile Include="CognitiveServices.cs" />
     <Compile Include="CognitiveServicesApiCalls.cs" />

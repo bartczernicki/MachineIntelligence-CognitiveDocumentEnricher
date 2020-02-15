@@ -298,7 +298,7 @@ namespace CognitiveDocumentEnricher
                         if (Config.USE_AZURE_BLOB_STORAGE)
                         {
                             // Azure Storage Objects Init
-                            var cloudStorageBloblClient = Util.BlobStorageAccount.CreateCloudBlobClient();
+                            var cloudStorageBloblClient = AzureStorage.BlobStorageAccount.CreateCloudBlobClient();
                             var enrichmentContainer = cloudStorageBloblClient.GetContainerReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES.ToLower());
                             uri = enrichmentContainer.StorageUri.PrimaryUri + @"/" + cleanCategory + @"/" + cleanFileName + @"/";
                             var trainingImage = enrichmentContainer.GetBlockBlobReference(cloudImagePath);
@@ -456,7 +456,7 @@ namespace CognitiveDocumentEnricher
                     // For large documents use: CosmosDb or blob storage
                     if (Config.USE_AZURE_TABLE_STORAGE)
                     {
-                        var tableStorageClient = Util.BlobStorageAccount.CreateCloudTableClient();
+                        var tableStorageClient = AzureStorage.BlobStorageAccount.CreateCloudTableClient();
                         Microsoft.WindowsAzure.Storage.Table.CloudTable table = tableStorageClient.GetTableReference(Config.STORAGE_TABLE_AND_CONTAINER_NAMES);
                         table.CreateIfNotExists();
 
