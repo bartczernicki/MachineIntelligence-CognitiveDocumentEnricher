@@ -19,10 +19,43 @@ namespace CognitiveDocumentEnricher
 
             Console.WriteLine("--------------------------------");
 
+            // Check for valid directories
+            if (string.IsNullOrEmpty(Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Local directory for source documents is blank.");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
+            if (!Directory.Exists(Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("AppConfig - Local directory for SOURCE documents: {0} does not exist.", Config.LOCAL_LOCATION_FILES_SOURCE_DOCUMENTS);
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
+            if (!Directory.Exists(Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("AppConfig - Local directory for PROCESSED documents: {0} does not exist.", Config.LOCAL_LOCATION_FILES_PROCESSED_OUTPUTS);
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
             if (!Config.USE_COGNITIVE_SERVICES_V2 && !Config.USE_COGNITIVE_SERVICES_V3)
             {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine("You must have either Cognitive Services V2 or V3 enabled in the Config file.");
+                Console.WriteLine("AppConfig - You must have either Cognitive Services V2 or V3 enabled in the Config file.");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+
+            if (string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_KEY) || string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_REGION))
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("AppConfig - COGNITIVE_SERVICES_KEY or COGNITIVE_SERVICES_REGION is empty.");
                 Console.ReadLine();
                 Environment.Exit(0);
             }

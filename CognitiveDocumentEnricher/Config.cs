@@ -70,9 +70,12 @@ namespace CognitiveDocumentEnricher
             // 4) CosmosDb Storage
             USE_COSMOSDB_STORAGE = Convert.ToBoolean(ConfigurationManager.AppSettings["USE_COSMOSDB_STORAGE"]);
 
-            COSMOSDB_DOCUMENTS_URI = new Uri(ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_URI"]);
-            COSMOSDB_DOCUMENTS_KEY = ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_KEY"];
-            COSMOSDB_DOCUMENTS_SELFLINK = ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_SELFLINK"];
+            if (USE_COSMOSDB_STORAGE)
+            {
+                COSMOSDB_DOCUMENTS_URI = new Uri(ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_URI"]);
+                COSMOSDB_DOCUMENTS_KEY = ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_KEY"];
+                COSMOSDB_DOCUMENTS_SELFLINK = ConfigurationManager.AppSettings["COSMOSDB_DOCUMENTS_SELFLINK"];
+            }
         }
     }
 }
