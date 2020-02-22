@@ -52,7 +52,7 @@ namespace CognitiveDocumentEnricher
                 Environment.Exit(0);
             }
 
-            if (string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_KEY) || string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_REGION))
+            if (string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_KEY) || string.IsNullOrEmpty(Config.COGNITIVE_SERVICES_REGION_URI))
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("AppConfig - COGNITIVE_SERVICES_KEY or COGNITIVE_SERVICES_REGION is empty.");
@@ -400,10 +400,17 @@ namespace CognitiveDocumentEnricher
                         // Add to phrases to process (english)
                         if (tempOcrItem.Length > 5000)
                         {
-                            tempOcrItem = tempOcrItem.Substring(0, 5000);
-                        }
+                            var tempOcrItemOne = tempOcrItem.Substring(0, 5000);
+                            var tempOcrItemTwo = tempOcrItem.Substring(5000, (tempOcrItem.Length-5000));
 
-                        ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItem));
+                            // Add both
+                            ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItemOne));
+                            ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItemTwo));
+                        }
+                        else
+                        {
+                            ocrPhrases.Add(new KeyValuePair<string, string>("en", tempOcrItem));
+                        }
                     }
 
                     List<string> keyPhrasesV2 = new List<string>();

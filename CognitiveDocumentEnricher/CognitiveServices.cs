@@ -111,7 +111,7 @@ namespace CognitiveDocumentEnricher
             // Build client API call
             ITextAnalyticsClient client = new TextAnalyticsClient(creds)
             {
-                Endpoint = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS
+                Endpoint = Config.COGNITIVE_SERVICES_REGION_URI
             };
 
             // Getting key-phrases
@@ -177,7 +177,7 @@ namespace CognitiveDocumentEnricher
         {
             var contentModeratorClient = new ContentModeratorClient(new ApiKeyServiceClientCredentialsContentModerator())
             {
-                Endpoint = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS
+                Endpoint = Config.COGNITIVE_SERVICES_REGION_URI
             };
 
             var textInputs = (ocrPhrasesSamples.Select((v, i) => v.ToString()).ToList());
@@ -255,7 +255,7 @@ namespace CognitiveDocumentEnricher
                 Documents = textAnalyticsInputsV3KeyEntities
             };
             
-            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "text/analytics/v3.0-preview.1/entities/recognition/general";
+            var uri = Config.COGNITIVE_SERVICES_REGION_URI + "/text/analytics/v3.0-preview.1/entities/recognition/general";
 
             using (var httpClient = new HttpClient())
             {
@@ -301,7 +301,7 @@ namespace CognitiveDocumentEnricher
                 Documents = textAnalyticsInputsV3KeyPhrases
             };
 
-            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview.1/keyPhrases";
+            var uri = Config.COGNITIVE_SERVICES_REGION_URI + "/text/analytics/v3.0-preview.1/keyPhrases";
 
             using (var httpClient = new HttpClient())
             {
@@ -347,7 +347,7 @@ namespace CognitiveDocumentEnricher
                 Documents = textAnalyticsInputsV3PIIs
             };
 
-            var uri = Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview.1/entities/recognition/pii";
+            var uri = Config.COGNITIVE_SERVICES_REGION_URI + "/text/analytics/v3.0-preview.1/entities/recognition/pii";
 
             using (var httpClient = new HttpClient())
             {
@@ -385,7 +385,7 @@ namespace CognitiveDocumentEnricher
                 httpClient.DefaultRequestHeaders.Add("Ocp-Apim-Subscription-Key", Config.COGNITIVE_SERVICES_KEY);
 
                 var httpContent = new StringContent(JsonConvert.SerializeObject(inputDocuments), Encoding.UTF8, "application/json");
-                var uriEndpoint = new Uri(Config.COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS + "/text/analytics/v3.0-preview/sentiment");
+                var uriEndpoint = new Uri(Config.COGNITIVE_SERVICES_REGION_URI + "/text/analytics/v3.0-preview/sentiment");
 
                 var httpResponse = await httpClient.PostAsync(uriEndpoint, httpContent);
                 var responseContent = await httpResponse.Content.ReadAsStringAsync();
@@ -408,7 +408,7 @@ namespace CognitiveDocumentEnricher
         public static async Task<Tuple<string, OCRObjectResult>> VisionOCRResultBatchReadAsync(string uri, string apiVersion)
         {
             // Computer Vision URL
-            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
+            var urlString = Config.COGNITIVE_SERVICES_REGION_URI + "/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
             // return variables
             var responseContent = string.Empty;
             OCRObjectResult ocrObject = null;
@@ -473,7 +473,7 @@ namespace CognitiveDocumentEnricher
         public static async Task<Tuple<string, OCRObjectResult>> VisionOCRResultBatchReadFromImageAsync(string imageFilePath, string apiVersion)
         {
             // Computer Vision URL
-            var urlString = "https://" + Config.COGNITIVE_SERVICES_REGION + ".api.cognitive.microsoft.com/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
+            var urlString = Config.COGNITIVE_SERVICES_REGION_URI + "/vision/" + apiVersion + "/read/core/asyncBatchAnalyze";
             // return variables
             var responseContent = string.Empty;
             OCRObjectResult ocrObject = null;

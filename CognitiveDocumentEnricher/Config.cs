@@ -18,7 +18,7 @@ namespace CognitiveDocumentEnricher
         public static readonly string COGNITIVE_SERVICES_KEY;
         public static readonly string COGNITIVE_SERVICES_BING_ENTITY_SEARCH_KEY;
         public static readonly string COGNITIVE_SERVICES_REGION;
-        public static readonly string COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS;
+        public static readonly string COGNITIVE_SERVICES_REGION_URI;
 
         // Cloud Storage
         public static readonly bool USE_AZURE_BLOB_STORAGE;
@@ -53,8 +53,7 @@ namespace CognitiveDocumentEnricher
 
             COGNITIVE_SERVICES_KEY = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_KEY"];
             COGNITIVE_SERVICES_BING_ENTITY_SEARCH_KEY = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_BING_ENTITY_SEARCH_KEY"];
-            COGNITIVE_SERVICES_REGION = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_REGION"];
-            COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_REGION_TEXT_ANALYTICS"];
+            COGNITIVE_SERVICES_REGION_URI = ConfigurationManager.AppSettings["COGNITIVE_SERVICES_REGION_URI"];
 
 
             // 3) Cloud Storage
